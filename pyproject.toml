@@ -7,9 +7,13 @@ authors = ["Nemris <nemris@protonmail.com>"]
 
 [tool.poetry.dependencies]
 python = "^3.9"
+bs4 = "^0.0.1"
+requests = "^2.25.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"
+pylint = "^2.6.0"
+hypothesis = "^5.41.5"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
