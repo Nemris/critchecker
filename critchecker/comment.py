@@ -54,3 +54,42 @@ class Comment():  # pylint: disable=too-many-instance-attributes
             self.body = comment["textContent"]["html"]["markup"]
         except KeyError as exception:
             raise ValueError("malformed comment data") from exception
+
+
+@dataclasses.dataclass
+class CommentPage():
+    """
+    A page of comments.
+
+    Args:
+        commentpage: The dict representation of a comment page, as
+            returned by the DA Eclipse API.
+        has_more: Whether a following comment page exists.
+        next_offset: The offset of the next comment page, if any.
+        comments: The comments contained in the page.
+    """
+
+    commentpage: dataclasses.InitVar[dict]
+    has_more: bool = None
+    next_offset: int = None
+    comments: list[Comment] = None
+
+    def __post_init__(self, commentpage: dict) -> None:
+        """
+        Initialize the instance attributes by parsing commentpage.
+
+        Args:
+            commentpage: The dict representation of a comment page, as
+                returned by the DA Eclipse API.
+
+        Raises:
+            ValueError: If a required key is missing from comment or
+                instantiating a Comment fails.
+        """
+
+        try:
+            self.has_more = commentpage["hasMore"]
+            self.next_offset = commentpage["nextOffset"]
+            self.comments = [Comment(comment) for comment in commentpage["thread"]]
+        except (KeyError, ValueError) as exception:
+            raise ValueError("malformed comment page data") from exception
