@@ -18,11 +18,11 @@ def usernames(draw):
     """
     Hypothesis strategy to generate dummy DA usernames.
 
-    Usernames may contain only uppercase and lowercase letters, digits
-    and hyphens, which may not be the first or last character of a
-    username.
+    Usernames have a minimum length of 3, and must contain only upper
+    and lowercase ASCII letters, digits and hyphens. The latter must
+    not be at the beginning or end of the string.
 
-    A username's minimum length is 3.
+    Note that DA considers usernames in a case-insensitive way.
     """
 
     username = draw(
@@ -42,7 +42,7 @@ def categories(draw):
     """
     Hypothesis strategy to generate dummy DA deviation categories.
 
-    Category names must be ASCII lowercase.
+    Category names must contain only lowercase ASCII letters.
     """
 
     category = draw(
@@ -60,8 +60,8 @@ def deviations(draw):
     """
     Hypothesis strategy to generate dummy DA deviation names.
 
-    Deviation names must consist of an alphanumeric string with a
-    trailing hyphen, followed by a positive integer.
+    Deviation names must contain an alphanumeric string with a trailing
+    hyphen, followed by a positive integer.
     """
 
     deviation_name = "-".join([
@@ -81,8 +81,8 @@ def deviation_urls(draw):
     """
     Hypothesis strategy to generate dummy DA deviation URLs.
 
-    Deviation URLs are composed of the \"https://www.deviantart.com
-    string, plus a username, category and deviation name.
+    Deviation URLs must contain the \"https://www.deviantart.com\"
+    string, a username, a category and a deviation name.
     """
 
     url = "/".join([
