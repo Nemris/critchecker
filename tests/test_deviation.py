@@ -32,7 +32,7 @@ def usernames(draw):
         )
     )
 
-    assume(not username.startswith("_") or not username.endswith("_"))
+    assume(not username.startswith("-") and not username.endswith("-"))
 
     return username
 
