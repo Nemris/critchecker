@@ -20,4 +20,4 @@ def extract_id(url: str) -> str:
     try:
         return re.search(r"https://www\.deviantart\.com/\w+/\w+/.+-(\d+)$", url).group(1)
     except AttributeError as exception:
-        raise (f"'{url}': invalid deviation URL") from exception
+        raise ValueError(f"'{url}': invalid deviation URL") from exception
