@@ -13,7 +13,7 @@ class Comment():  # pylint: disable=too-many-instance-attributes
             the DA Eclipse API.
         id: The comment ID.
         parent_id: The parent comment's ID, if any.
-        type_id: The parent deviation"s type ID.
+        type_id: The parent deviation's type ID.
         belongs_to: The parent deviation's ID.
         posted_at: The comment's timestamp.
         author_id: The comment author's user ID.
