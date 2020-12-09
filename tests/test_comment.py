@@ -65,8 +65,8 @@ def comments(draw):
         "itemId": draw(integers(1)),
         "posted": draw(text()),
         "user": {
-            "userId": integers(1),
-            "username": text()
+            "userId": draw(integers(1)),
+            "username": draw(text())
         },
         "textContent": {
             "html": {
