@@ -76,7 +76,7 @@ def deviations(draw):
             )
         ),
         str(draw(integers(1)))
-        ])
+    ])
 
     return deviation_name
 
