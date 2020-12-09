@@ -93,3 +93,27 @@ class CommentPage():
             self.comments = [Comment(comment) for comment in commentpage["thread"]]
         except (KeyError, ValueError) as exception:
             raise ValueError("malformed comment page data") from exception
+
+
+def assemble_url(deviation_id: int, type_id: int, comment_id: int) -> str:
+    """
+    Assemble the URL to a comment.
+
+    Args:
+        deviation_id: The parent deviation's ID.
+        type_id: The parent deviation's type ID.
+        comment_id: The comment ID.
+
+    Returns:
+        The URL to the comment.
+    """
+
+    base_url = "https://www.deviantart.com"
+    relative_url = "/".join([
+        "comments",
+        str(type_id),
+        str(deviation_id),
+        str(comment_id)
+    ])
+
+    return "/".join([base_url, relative_url])
