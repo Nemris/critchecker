@@ -12,6 +12,46 @@ from critchecker import comment
 
 # pylint: disable=no-value-for-parameter
 
+
+@composite
+def deviation_ids(draw):
+    """
+    Hypothesis strategy to generate dummy DA deviation IDs.
+
+    Deviation IDs must contain only positive integers.
+    """
+
+    deviation_id = draw(integers(1))
+
+    return deviation_id
+
+
+@composite
+def type_ids(draw):
+    """
+    Hypothesis strategy to generate dummy DA type IDs.
+
+    Type IDs must contain only positive integers.
+    """
+
+    type_id = draw(integers(1))
+
+    return type_id
+
+
+@composite
+def comment_ids(draw):
+    """
+    Hypothesis strategy to generate dummy DA comment IDs.
+
+    Comment IDs must contain only positive integers.
+    """
+
+    comment_id = draw(integers(1))
+
+    return comment_id
+
+
 @composite
 def comments(draw):
     """
@@ -88,3 +128,16 @@ def test_commentpage_data_same_as_dict(commentpage_dict):
     # No way to test result.comments for equality, so we compare its
     # length, instead.
     assert len(result.comments) == len(commentpage_dict["thread"])
+
+
+@given(deviation_ids(), type_ids(), comment_ids())
+def test_comment_url_contains_all_ids(deviation_id, type_id, comment_id):
+    """
+    Test that the assembled comment URL contains the starting IDs.
+    """
+
+    result = comment.assemble_url(deviation_id, type_id, comment_id)
+
+    assert str(deviation_id) in result
+    assert str(type_id) in result
+    assert str(comment_id) in result
