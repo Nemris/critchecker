@@ -17,7 +17,7 @@ def extract_id(url: str) -> str:
         ValueError: If no deviation ID is found.
     """
 
-    pattern = r"https://www\.deviantart\.com/[A-Za-z0-9\-]+/[a-z]+/.+-(\d+)$"
+    pattern = r"https://www\.deviantart\.com/[A-Za-z0-9\-]+/[a-z\-]+/.+-(\d+)$"
 
     try:
         return re.search(pattern, url).group(1)

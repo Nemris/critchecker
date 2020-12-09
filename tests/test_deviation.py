@@ -42,15 +42,19 @@ def categories(draw):
     """
     Hypothesis strategy to generate dummy DA deviation categories.
 
-    Category names must contain only lowercase ASCII letters.
+    Category names must contain only lowercase ASCII letters and
+    hyphens. The latter must not be at the beginning or end of the
+    string.
     """
 
     category = draw(
         text(
-            alphabet=string.ascii_lowercase,
+            alphabet=string.ascii_lowercase + "-",
             min_size=1
         )
     )
+
+    assume(not category.startswith("-") and not category.endswith("-"))
 
     return category
 
