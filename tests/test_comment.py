@@ -59,10 +59,10 @@ def comments(draw):
     """
 
     data = {
-        "commentId": draw(integers(1)),
-        "parentId": draw(integers(1)),
-        "typeId": draw(integers(1)),
-        "itemId": draw(integers(1)),
+        "commentId": draw(comment_ids()),
+        "parentId": draw(comment_ids()),
+        "typeId": draw(type_ids()),
+        "itemId": draw(deviation_ids()),
         "posted": draw(text()),
         "user": {
             "userId": draw(integers(1)),
@@ -82,6 +82,7 @@ def comments(draw):
 def commentpages(draw):
     """
     Hypothesis strategy to generate dummy DA Eclipse comment page
+
     dicts.
     """
 
