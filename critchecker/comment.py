@@ -2,6 +2,12 @@
 
 import dataclasses
 
+import requests
+
+
+class FetchingError(Exception):
+    """ A network or HTTP error occurred while fetching data. """
+
 
 @dataclasses.dataclass
 class Comment():  # pylint: disable=too-many-instance-attributes
@@ -117,3 +123,47 @@ def assemble_url(deviation_id: int, type_id: int, comment_id: int) -> str:
     ])
 
     return "/".join([base_url, relative_url])
+
+
+def fetch_page(deviation_id: int, type_id: int, depth: int, offset: int) -> CommentPage:
+    """
+    Fetch a page of comments to a deviation.
+
+    Args:
+        deviation_id: The parent deviation's ID.
+        type_id: The parent deviation's type ID.
+        depth: The amount of replies to a comment. A depth of zero
+            returns only the topmost comment.
+        offset: The comment offset from where to fetch comments in
+            blocks of 10 per page.
+
+    Returns:
+        A page of comments.
+
+    Raises:
+        FetchingError: If an error occurs while fetching the comment
+            page data.
+        ValueError: If DA returns invalid comment page data.
+    """
+
+    api_url = "https://www.deviantart.com/_napi/shared_api/comments/thread"
+    params = {
+        "typeid": type_id,
+        "itemid": deviation_id,
+        "maxdepth": depth,
+        "offset": offset
+    }
+
+    try:
+        response = requests.get(api_url, params=params, timeout=5)
+        response.raise_for_status()
+    except requests.exceptions.HTTPError as exception:
+        raise FetchingError(f"HTTP error: '{exception}'") from exception
+    except requests.exceptions.ConnectionError as exception:
+        raise FetchingError(f"connection error: '{exception}'") from exception
+    except requests.exceptions.Timeout as exception:
+        raise FetchingError(f"connection timed out: '{exception}'") from exception
+    except requests.exceptions.RequestException as exception:
+        raise FetchingError(f"unknown error: '{exception}'") from exception
+
+    return CommentPage(response.json())
