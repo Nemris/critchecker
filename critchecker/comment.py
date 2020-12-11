@@ -1,5 +1,6 @@
 """ Functions and dataclasses that handle DA comments. """
 
+import collections
 import dataclasses
 
 import requests
@@ -167,3 +168,38 @@ def fetch_page(deviation_id: int, type_id: int, depth: int, offset: int) -> Comm
         raise FetchingError(f"unknown error: '{exception}'") from exception
 
     return CommentPage(response.json())
+
+
+def yield_all(deviation_id: int, type_id: int, depth: int) -> collections.abc.Iterator[Comment]:
+    """
+    Fetch all the comments to a deviation and yield them one by one.
+
+    Args:
+        deviation_id: The parent deviation's ID.
+        type_id: The parent deviation's type ID.
+        depth: The amount of replies to a comment. A depth of zero
+            returns only the topmost comment.
+
+    Yields:
+        The next comment.
+
+    Raises:
+        ValueError: If an error happens while fetching or parsing
+            comment page data.
+    """
+
+    offset = 0
+
+    while True:
+        try:
+            commentpage = fetch_page(deviation_id, type_id, depth, offset)
+        except (FetchingError, ValueError) as exception:
+            raise ValueError(exception) from exception
+
+        for comment in commentpage.comments:
+            yield comment
+
+        if not commentpage.has_more:
+            break
+
+        offset = commentpage.next_offset
