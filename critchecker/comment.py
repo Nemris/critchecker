@@ -196,8 +196,7 @@ def yield_all(deviation_id: int, type_id: int, depth: int) -> collections.abc.It
         except (FetchingError, ValueError) as exception:
             raise ValueError(exception) from exception
 
-        for comment in commentpage.comments:
-            yield comment
+        yield from commentpage.comments
 
         if not commentpage.has_more:
             break
