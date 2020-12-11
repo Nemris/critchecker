@@ -53,6 +53,27 @@ def comment_ids(draw):
 
 
 @composite
+def comment_urls(draw):
+    """
+    Hypothesis strategy to generate dummy DA comment URLs.
+
+    Comment URLs must contain the
+    \"https://www.deviantart.com/comments\" string, a type ID, a
+    deviation ID and a comment ID.
+    """
+
+    url = "/".join([
+        "https://www.deviantart.com",
+        "comments",
+        str(draw(type_ids())),
+        str(draw(deviation_ids())),
+        str(draw(comment_ids()))
+    ])
+
+    return url
+
+
+@composite
 def comments(draw):
     """
     Hypothesis strategy to generate dummy DA Eclipse comment dicts.
@@ -142,3 +163,14 @@ def test_comment_url_contains_all_ids(deviation_id, type_id, comment_id):
     assert str(deviation_id) in result
     assert str(type_id) in result
     assert str(comment_id) in result
+
+
+@given(comment_urls())
+def test_validating_valid_comment_urls_returns_true(comment_url):
+    """
+    Test that validating valid comment URLs returns True.
+    """
+
+    result = comment.is_valid(comment_url)
+
+    assert result
