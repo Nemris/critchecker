@@ -2,6 +2,7 @@
 
 import collections
 import dataclasses
+import re
 
 import requests
 
@@ -202,3 +203,19 @@ def yield_all(deviation_id: int, type_id: int, depth: int) -> collections.abc.It
             break
 
         offset = commentpage.next_offset
+
+
+def is_valid(url: str) -> bool:
+    """
+    Check if the URL is a valid comment URL.
+
+    Args:
+        url: The URL to check.
+
+    Returns:
+        True if the URL is a valid comment URL, False otherwise.
+    """
+
+    pattern = r"https://www\.deviantart\.com/comments/\d+/\d+/\d+"
+
+    return bool(re.match(pattern, url))
