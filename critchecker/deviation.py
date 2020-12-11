@@ -45,3 +45,23 @@ def extract_category(url: str) -> str:
         return re.search(pattern, url).group(1)
     except AttributeError as exception:
         raise ValueError(f"'{url}': invalid deviation URL") from exception
+
+
+def typeid_of(category: str) -> int:
+    """
+    Return a type ID matching the deviation category, or zero.
+
+    Args:
+        category: The deviation category.
+
+    Returns:
+        The type ID matching a deviation category, or zero.
+    """
+
+    # Currently implementing art and journals only.
+    type_ids = {
+        "art": 1,
+        "journal": 1
+    }
+
+    return type_ids.get(category, 0)
