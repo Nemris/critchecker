@@ -174,3 +174,14 @@ def test_validating_valid_comment_urls_returns_true(comment_url):
     result = comment.is_valid(comment_url)
 
     assert result
+
+
+@given(deviation_ids(), type_ids(), comment_ids())
+def test_assembled_comment_urls_pass_validation(deviation_id, type_id, comment_id):
+    """
+    Test that the assembled comment URL passes verification.
+    """
+
+    result = comment.assemble_url(deviation_id, type_id, comment_id)
+
+    assert comment.is_valid(result)
