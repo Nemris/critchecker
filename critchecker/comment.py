@@ -3,6 +3,10 @@
 import dataclasses
 
 
+class FetchingError(Exception):
+    """ A network or HTTP error occurred while fetching data. """
+
+
 @dataclasses.dataclass
 class Comment():  # pylint: disable=too-many-instance-attributes
     """
