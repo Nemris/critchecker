@@ -3,6 +3,7 @@
 import string
 
 from hypothesis import assume
+from hypothesis import example
 from hypothesis import given
 from hypothesis.strategies import composite
 from hypothesis.strategies import integers
@@ -122,6 +123,8 @@ def test_deviation_category_is_lowercase(url):
 
 
 @given(categories())
+@example("art")
+@example("journal")
 def test_deviation_type_id_greater_equal_to_zero(category):
     """
     Test that a deviation type ID is greater or equal to zero.
