@@ -108,3 +108,14 @@ def test_deviation_id_is_decimal(url):
     result = deviation.extract_id(url)
 
     assert result.isdecimal()
+
+
+@given(deviation_urls())
+def test_deviation_category_is_lowercase(url):
+    """
+    Test that a deviation category is lowercase.
+    """
+
+    result = deviation.extract_category(url)
+
+    assert result.islower()
