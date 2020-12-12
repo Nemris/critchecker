@@ -74,6 +74,22 @@ def comment_urls(draw):
 
 
 @composite
+def anchor_tags(draw):
+    """
+    Hypothesis strategy to generate dummy anchor tags with valid
+    comment URLs.
+
+    Anchor tags must contain the \"href\" attribute.
+    """
+
+    url = draw(comment_urls())
+    label = draw(text())
+    tag = f"<a href=\"{url}\">{label}</a>"
+
+    return tag
+
+
+@composite
 def comments(draw):
     """
     Hypothesis strategy to generate dummy DA Eclipse comment dicts.
