@@ -4,6 +4,7 @@ import collections
 import dataclasses
 import re
 
+import bs4
 import requests
 
 
@@ -219,3 +220,19 @@ def is_valid(url: str) -> bool:
     pattern = r"https://www\.deviantart\.com/comments/\d+/\d+/\d+"
 
     return bool(re.match(pattern, url))
+
+
+def yield_links(comment: str) -> collections.abc.Iterator[str]:
+    """
+    Yield all the links in a comment, one by one.
+
+    Args:
+        comment: The comment to extract links from.
+
+    Yields:
+        The next link.
+    """
+
+    html = bs4.BeautifulSoup(comment, features="html.parser")
+
+    yield from (tag.get("href") for tag in html.findAll("a"))
