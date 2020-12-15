@@ -209,7 +209,7 @@ def test_extracted_urls_pass_validation(tag):
     Test that the extracted comment URL passes validation.
     """
 
-    result = [link for link in comment.yield_links(tag)]
+   # result = [link for link in comment.yield_links(tag)]
 
-    for link in result:
+    for link in comment.yield_links(tag):
         assert comment.is_valid(link)
