@@ -74,6 +74,22 @@ def comment_urls(draw):
 
 
 @composite
+def anchor_tags(draw):
+    """
+    Hypothesis strategy to generate dummy anchor tags with valid
+    comment URLs.
+
+    Anchor tags must contain the \"href\" attribute.
+    """
+
+    url = draw(comment_urls())
+    label = draw(text())
+    tag = f"<a href=\"{url}\">{label}</a>"
+
+    return tag
+
+
+@composite
 def comments(draw):
     """
     Hypothesis strategy to generate dummy DA Eclipse comment dicts.
@@ -185,3 +201,15 @@ def test_assembled_comment_urls_pass_validation(deviation_id, type_id, comment_i
     result = comment.assemble_url(deviation_id, type_id, comment_id)
 
     assert comment.is_valid(result)
+
+
+@given(anchor_tags())
+def test_extracted_urls_pass_validation(tag):
+    """
+    Test that the extracted comment URL passes validation.
+    """
+
+   # result = [link for link in comment.yield_links(tag)]
+
+    for link in comment.yield_links(tag):
+        assert comment.is_valid(link)
