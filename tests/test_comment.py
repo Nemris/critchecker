@@ -187,7 +187,7 @@ def test_validating_valid_comment_urls_returns_true(comment_url):
     Test that validating valid comment URLs returns True.
     """
 
-    result = comment.is_valid(comment_url)
+    result = comment.is_url_valid(comment_url)
 
     assert result
 
@@ -200,7 +200,7 @@ def test_assembled_comment_urls_pass_validation(deviation_id, type_id, comment_i
 
     result = comment.assemble_url(deviation_id, type_id, comment_id)
 
-    assert comment.is_valid(result)
+    assert comment.is_url_valid(result)
 
 
 @given(anchor_tags())
@@ -212,4 +212,4 @@ def test_extracted_urls_pass_validation(tag):
    # result = [link for link in comment.yield_links(tag)]
 
     for link in comment.yield_links(tag):
-        assert comment.is_valid(link)
+        assert comment.is_url_valid(link)
