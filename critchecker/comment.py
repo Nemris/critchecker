@@ -128,6 +128,50 @@ def assemble_url(deviation_id: int, type_id: int, comment_id: int) -> str:
     return "/".join([base_url, relative_url])
 
 
+def fetch(deviation_id: int, type_id: int, comment_id: int) -> Comment:
+    """
+    Fetch a single comment to a deviation.
+
+    Args:
+        deviation_id: The parent deviation's ID.
+        type_id: The parent deviation's type ID.
+        comment_id: The comment ID.
+
+    Returns:
+        A single comment.
+
+    Raises:
+        FetchingError: If an error occurs while fetching the comment
+            data.
+        ValueError: If DA returns invalid comment data.
+    """
+
+    # TODO: deduplicate logic.
+
+    api_url = "https://www.deviantart.com/_napi/shared_api/comments/thread"
+    params = {
+        "itemid": deviation_id,
+        "typeid": type_id,
+        "commentid": comment_id,
+        "limit": 1
+    }
+
+    try:
+        response = requests.get(api_url, params=params, timeout=5)
+        response.raise_for_status()
+    except requests.exceptions.HTTPError as exception:
+        raise FetchingError(f"HTTP error: '{exception}:") from exception
+    except requests.exceptions.ConnectionError as exception:
+        raise FetchingError(f"connection error: '{exception}'") from exception
+    except requests.exceptions.Timeout as exception:
+        raise FetchingError(f"connection timed out: '{exception}'") from exception
+    except requests.exceptions.RequestException as exception:
+        raise FetchingError(f"unknown error: '{exception}'") from exception
+
+    # DA always returns a comment page, so let's extract the comment.
+    return CommentPage(response.json()).comments[0]
+
+
 def fetch_page(deviation_id: int, type_id: int, depth: int, offset: int) -> CommentPage:
     """
     Fetch a page of comments to a deviation.
