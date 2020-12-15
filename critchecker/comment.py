@@ -250,7 +250,7 @@ def yield_all(deviation_id: int, type_id: int, depth: int) -> collections.abc.It
         offset = commentpage.next_offset
 
 
-def is_valid(url: str) -> bool:
+def is_url_valid(url: str) -> bool:
     """
     Check if the URL is a valid comment URL.
 
