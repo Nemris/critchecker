@@ -139,7 +139,7 @@ def fetch(deviation_id: int, type_id: int, comment_id: int) -> typing.Optional[C
         comment_id: The comment ID.
 
     Returns:
-        A single comment.
+        A single comment or None.
 
     Raises:
         FetchingError: If an error occurs while fetching the comment
