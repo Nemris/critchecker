@@ -218,17 +218,15 @@ def yield_all(deviation_id: int, type_id: int, depth: int) -> collections.abc.It
         The next comment.
 
     Raises:
-        ValueError: If an error happens while fetching or parsing
-            comment page data.
+        FetchingError: If an error occurs while fetching the comment
+            page data.
+        ValueError: If DA returns invalid comment page data.
     """
 
     offset = 0
 
     while True:
-        try:
-            commentpage = fetch_page(deviation_id, type_id, depth, offset)
-        except (FetchingError, ValueError) as exception:
-            raise ValueError(exception) from exception
+        commentpage = fetch_page(deviation_id, type_id, depth, offset)
 
         yield from commentpage.comments
 
