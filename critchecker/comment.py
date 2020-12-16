@@ -3,6 +3,7 @@
 import collections
 import dataclasses
 import re
+import typing
 
 import bs4
 import requests
@@ -128,7 +129,7 @@ def assemble_url(deviation_id: int, type_id: int, comment_id: int) -> str:
     return "/".join([base_url, relative_url])
 
 
-def fetch(deviation_id: int, type_id: int, comment_id: int) -> Comment:
+def fetch(deviation_id: int, type_id: int, comment_id: int) -> typing.Optional[Comment]:
     """
     Fetch a single comment to a deviation.
 
@@ -138,7 +139,7 @@ def fetch(deviation_id: int, type_id: int, comment_id: int) -> Comment:
         comment_id: The comment ID.
 
     Returns:
-        A single comment.
+        A single comment or None.
 
     Raises:
         FetchingError: If an error occurs while fetching the comment
@@ -146,30 +147,17 @@ def fetch(deviation_id: int, type_id: int, comment_id: int) -> Comment:
         ValueError: If DA returns invalid comment data.
     """
 
-    # TODO: deduplicate logic.
+    # TODO: Once PEP-604 is implemented, use the new union syntax.
 
-    api_url = "https://www.deviantart.com/_napi/shared_api/comments/thread"
-    params = {
-        "itemid": deviation_id,
-        "typeid": type_id,
-        "commentid": comment_id,
-        "limit": 1
-    }
+    # pylint: disable=unsubscriptable-object
+    # See https://github.com/PyCQA/pylint/issues/3882.
 
-    try:
-        response = requests.get(api_url, params=params, timeout=5)
-        response.raise_for_status()
-    except requests.exceptions.HTTPError as exception:
-        raise FetchingError(f"HTTP error: '{exception}:") from exception
-    except requests.exceptions.ConnectionError as exception:
-        raise FetchingError(f"connection error: '{exception}'") from exception
-    except requests.exceptions.Timeout as exception:
-        raise FetchingError(f"connection timed out: '{exception}'") from exception
-    except requests.exceptions.RequestException as exception:
-        raise FetchingError(f"unknown error: '{exception}'") from exception
+    depth = 0
+    for comment in yield_all(deviation_id, type_id, depth):
+        if comment.id == comment_id:
+            return comment
 
-    # DA always returns a comment page, so let's extract the comment.
-    return CommentPage(response.json()).comments[0]
+    return None
 
 
 def fetch_page(deviation_id: int, type_id: int, depth: int, offset: int) -> CommentPage:
