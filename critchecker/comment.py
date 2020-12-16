@@ -151,6 +151,8 @@ def fetch(deviation_id: int, type_id: int, comment_id: int) -> Comment:
         if comment.id == comment_id:
             return comment
 
+    return None
+
 
 def fetch_page(deviation_id: int, type_id: int, depth: int, offset: int) -> CommentPage:
     """
