@@ -3,6 +3,7 @@
 import collections
 import dataclasses
 import re
+import typing
 
 import bs4
 import requests
@@ -128,7 +129,7 @@ def assemble_url(deviation_id: int, type_id: int, comment_id: int) -> str:
     return "/".join([base_url, relative_url])
 
 
-def fetch(deviation_id: int, type_id: int, comment_id: int) -> Comment:
+def fetch(deviation_id: int, type_id: int, comment_id: int) -> typing.Optional[Comment]:
     """
     Fetch a single comment to a deviation.
 
@@ -145,6 +146,11 @@ def fetch(deviation_id: int, type_id: int, comment_id: int) -> Comment:
             data.
         ValueError: If DA returns invalid comment data.
     """
+
+    # TODO: Once PEP-604 is implemented, use the new union syntax.
+
+    # pylint: disable=unsubscriptable-object
+    # See https://github.com/PyCQA/pylint/issues/3882.
 
     depth = 0
     for comment in yield_all(deviation_id, type_id, depth):
