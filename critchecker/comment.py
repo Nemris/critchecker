@@ -146,30 +146,10 @@ def fetch(deviation_id: int, type_id: int, comment_id: int) -> Comment:
         ValueError: If DA returns invalid comment data.
     """
 
-    # TODO: deduplicate logic.
-
-    api_url = "https://www.deviantart.com/_napi/shared_api/comments/thread"
-    params = {
-        "itemid": deviation_id,
-        "typeid": type_id,
-        "commentid": comment_id,
-        "limit": 1
-    }
-
-    try:
-        response = requests.get(api_url, params=params, timeout=5)
-        response.raise_for_status()
-    except requests.exceptions.HTTPError as exception:
-        raise FetchingError(f"HTTP error: '{exception}:") from exception
-    except requests.exceptions.ConnectionError as exception:
-        raise FetchingError(f"connection error: '{exception}'") from exception
-    except requests.exceptions.Timeout as exception:
-        raise FetchingError(f"connection timed out: '{exception}'") from exception
-    except requests.exceptions.RequestException as exception:
-        raise FetchingError(f"unknown error: '{exception}'") from exception
-
-    # DA always returns a comment page, so let's extract the comment.
-    return CommentPage(response.json()).comments[0]
+    depth = 0
+    for comment in yield_all(deviation_id, type_id, depth):
+        if comment.id == comment_id:
+            return comment
 
 
 def fetch_page(deviation_id: int, type_id: int, depth: int, offset: int) -> CommentPage:
