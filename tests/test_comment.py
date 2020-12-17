@@ -213,3 +213,15 @@ def test_extracted_urls_pass_validation(tag):
 
     for link in comment.yield_links(tag):
         assert comment.is_url_valid(link)
+
+
+@given(comment_urls())
+def test_extracted_ids_from_url_are_ints(comment_url):
+    """
+    Test that the IDs extracred from a comment URLs are int instances.
+    """
+
+    result = comment.extract_ids_from_url(comment_url)
+
+    for key in result:
+        assert isinstance(result[key], int)
