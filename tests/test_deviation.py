@@ -14,6 +14,7 @@ from critchecker import deviation
 
 # pylint: disable=no-value-for-parameter
 
+
 @composite
 def usernames(draw):
     """
