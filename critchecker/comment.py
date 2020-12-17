@@ -129,6 +129,32 @@ def assemble_url(deviation_id: int, type_id: int, comment_id: int) -> str:
     return "/".join([base_url, relative_url])
 
 
+def extract_ids_from_url(url: str) -> dict[int, int, int]:
+    """
+    Obtain the IDs from a comment URL.
+
+    Args:
+        url: The URL to a comment.
+
+    Returns:
+        The extracted type ID, deviation ID and comment ID as ints.
+
+    Raises:
+        ValueError: If the comment URL is invalid.
+    """
+
+    split_url = url.split("/")
+
+    try:
+        return {
+            "type_id": int(split_url[-3]),
+            "deviation_id": int(split_url[-2]),
+            "comment_id": int(split_url[-1])
+        }
+    except (IndexError, ValueError) as exception:
+        raise ValueError(f"'{url}': invalid comment URL") from exception
+
+
 def fetch(deviation_id: int, type_id: int, comment_id: int) -> typing.Optional[Comment]:
     """
     Fetch a single comment to a deviation.
