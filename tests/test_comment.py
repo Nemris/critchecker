@@ -107,6 +107,24 @@ def comment_markups(draw):
 
 
 @composite
+def comment_bodies(draw):
+    """
+    Hypothesis strategy to generate dummy DA comment bodies.
+
+    Bodies contain text, and must not be empty.
+    """
+
+    body = draw(
+        lists(
+            text(min_size=1),
+            min_size=1
+        )
+    )
+
+    return " ".join(body)
+
+
+@composite
 def comments(draw):
     """
     Hypothesis strategy to generate dummy DA Eclipse comment dicts.
