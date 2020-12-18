@@ -191,7 +191,7 @@ def fetch(deviation_id: int, type_id: int, comment_id: int) -> typing.Optional[C
 
 def fetch_page(deviation_id: int, type_id: int, depth: int, offset: int) -> CommentPage:
     """
-    Fetch a page of comments to a deviation.
+    Fetch a page of comments to a deviation, newest comments first.
 
     Args:
         deviation_id: The parent deviation's ID.
@@ -211,11 +211,14 @@ def fetch_page(deviation_id: int, type_id: int, depth: int, offset: int) -> Comm
     """
 
     api_url = "https://www.deviantart.com/_napi/shared_api/comments/thread"
+
+    # Assume we're most interested in newest comments.
     params = {
         "typeid": type_id,
         "itemid": deviation_id,
         "maxdepth": depth,
-        "offset": offset
+        "offset": offset,
+        "order": "newest"
     }
 
     try:
