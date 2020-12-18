@@ -291,7 +291,7 @@ def yield_links(comment: str) -> collections.abc.Iterator[str]:
 
     html = bs4.BeautifulSoup(comment, features="html.parser")
 
-    yield from (tag.get("href") for tag in html.findAll("a"))
+    yield from (tag.get("href") for tag in html.find_all("a"))
 
 
 def markup_to_text(markup: str) -> str:
