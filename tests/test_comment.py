@@ -273,3 +273,15 @@ def test_comment_markup_to_text_replaces_br_tag(comment_markup):
     result = comment.markup_to_text(comment_markup)
 
     assert "<br />" not in result
+
+
+@given(comment_bodies())
+def test_comment_word_count_is_always_positive_int(body):
+    """
+    Test that counting the words in a comment always returns a positive
+    integer.
+    """
+
+    result = comment.count_words(body)
+
+    assert result >= 0
