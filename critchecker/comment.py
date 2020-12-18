@@ -292,3 +292,24 @@ def yield_links(comment: str) -> collections.abc.Iterator[str]:
     html = bs4.BeautifulSoup(comment, features="html.parser")
 
     yield from (tag.get("href") for tag in html.findAll("a"))
+
+
+def markup_to_text(markup: str) -> str:
+    """
+    Remove all the HTML tags in a comment and replace \"<br>\" tags
+    with newlines.
+
+    Args:
+        markup: The comment to clean, as HTML data.
+
+    Returns:
+        The comment stripped of HTML tags and with \"<br>\" tags
+            replaced with newlines.
+    """
+
+    soup = bs4.BeautifulSoup(markup, features="html.parser")
+
+    for tag in soup.find_all("br"):
+        tag.replace_with("\n")
+
+    return soup.get_text()
