@@ -319,3 +319,17 @@ def markup_to_text(markup: str) -> str:
         tag.replace_with("\n")
 
     return soup.get_text()
+
+
+def count_words(comment: str) -> int:
+    """
+    Count how many words there are in a comment.
+
+    Args:
+        comment: The comment whose length to check.
+
+    Returns:
+        The number of words in the comment.
+    """
+
+    return len(comment.split())
