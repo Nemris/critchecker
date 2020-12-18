@@ -90,6 +90,23 @@ def anchor_tags(draw):
 
 
 @composite
+def comment_markups(draw):
+    """
+    Hypothesis strategy to generate dummy DA comment body markups.
+
+    Body markups contain text, and may contain HTML tags.
+    """
+
+    markup = "".join([
+        draw(text()),
+        "<br />",
+        draw(text())
+    ])
+
+    return markup
+
+
+@composite
 def comments(draw):
     """
     Hypothesis strategy to generate dummy DA Eclipse comment dicts.
