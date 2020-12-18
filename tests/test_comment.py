@@ -90,6 +90,23 @@ def anchor_tags(draw):
 
 
 @composite
+def comment_markups(draw):
+    """
+    Hypothesis strategy to generate dummy DA comment body markups.
+
+    Body markups contain text, and may contain HTML tags.
+    """
+
+    markup = "".join([
+        draw(text()),
+        "<br />",
+        draw(text())
+    ])
+
+    return markup
+
+
+@composite
 def comments(draw):
     """
     Hypothesis strategy to generate dummy DA Eclipse comment dicts.
@@ -225,3 +242,14 @@ def test_extracted_ids_from_url_are_ints(comment_url):
 
     for key in result:
         assert isinstance(result[key], int)
+
+
+@given(comment_markups())
+def test_comment_markup_to_text_replaces_br_tag(comment_markup):
+    """
+    Test that converting comment markup to text strips \"<br>\" tags.
+    """
+
+    result = comment.markup_to_text(comment_markup)
+
+    assert "<br />" not in result
