@@ -38,8 +38,8 @@ def load(infile: typing.TextIO) -> list[Row]:
     Load a Critmas database.
 
     Args:
-        infile: A .read()-supporting file-like object pointing to a
-            .csv database.
+        infile: A .read()-supporting file-like object containing a
+            CSV document.
 
     Returns:
         A list of Critmas database rows.
@@ -50,7 +50,7 @@ def load(infile: typing.TextIO) -> list[Row]:
 
 def dump(database: list[Row], outfile: typing.TextIO) -> int:
     """
-    Dump a Critmas database to a file.
+    Dump a Critmas database.
 
     Args:
         database: A list of Critmas database rows.
