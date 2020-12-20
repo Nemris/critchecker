@@ -46,3 +46,29 @@ def load(infile: typing.TextIO) -> list[Row]:
     """
 
     return [Row(**row) for row in csv.DictReader(infile)]
+
+
+def dump(database: list[Row], outfile: typing.TextIO) -> int:
+    """
+    Dump a Critmas database to a file.
+
+    Args:
+        database: A list of Critmas database rows.
+        outfile: A .write()-supporting file-like object.
+
+    Returns:
+        The number of written rows.
+    """
+
+    header = dataclasses.asdict(database[0]).keys()
+    writer = csv.DictWriter(outfile, header)
+    written = 0
+
+    writer.writeheader()
+    written += 1
+
+    for row in database:
+        writer.writerow(dataclasses.asdict(row))
+        written += 1
+
+    return written
