@@ -4,6 +4,7 @@ import io
 
 from hypothesis import given
 from hypothesis.strategies import composite
+from hypothesis.strategies import dates
 from hypothesis.strategies import integers
 from hypothesis.strategies import lists
 from hypothesis.strategies import none
@@ -16,6 +17,19 @@ from critchecker import database
 
 
 @composite
+def human_dates(draw):
+    """
+    Hypothesis strategy to generate human-readable dates.
+
+    A date must be in the format YYYY-MM-DD.
+    """
+
+    date = draw(dates()).strftime("%Y-%m-%d")
+
+    return date
+
+
+@composite
 def rows(draw):
     """
     Hypothesis strategy to generate dummy database Row()s.
@@ -25,8 +39,8 @@ def rows(draw):
         "crit_parent_id": draw(integers(1)),
         "crit_parent_type": draw(integers(1)),
         "crit_id": draw(integers(1)),
-        "crit_posted_at": draw(text(min_size=1)),
-        "crit_edited_at": draw(text(min_size=1) | none()),
+        "crit_posted_at": draw(human_dates()),
+        "crit_edited_at": draw(human_dates() | none()),
         "crit_author": draw(text(min_size=1)),
         "crit_words": draw(integers(1)),
         "crit_url": draw(text(min_size=1))
