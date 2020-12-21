@@ -43,9 +43,9 @@ def databases(draw):
     A database is a list of Row() entries.
     """
 
-    db = draw(lists(rows(), min_size=1))
+    data = draw(lists(rows(), min_size=1))
 
-    return db
+    return data
 
 
 @given(databases())
