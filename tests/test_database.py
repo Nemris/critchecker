@@ -1,5 +1,8 @@
 """ Tests for critchecker.database. """
 
+import io
+
+from hypothesis import given
 from hypothesis.strategies import composite
 from hypothesis.strategies import integers
 from hypothesis.strategies import lists
@@ -43,3 +46,16 @@ def databases(draw):
     db = draw(lists(rows(), min_size=1))
 
     return db
+
+
+@given(databases())
+def test_rows_written_equal_to_database_len_plus_one(data):
+    """
+    Test that the number of rows written to a file is equal to
+    len(data)+1.
+    """
+
+    with io.StringIO(newline="") as stream:
+        result = database.dump(data, stream)
+
+    assert result == len(data) + 1
