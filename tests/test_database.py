@@ -2,6 +2,7 @@
 
 from hypothesis.strategies import composite
 from hypothesis.strategies import integers
+from hypothesis.strategies import lists
 from hypothesis.strategies import none
 from hypothesis.strategies import text
 
@@ -29,3 +30,16 @@ def rows(draw):
     }
 
     return database.Row(**row)
+
+
+@composite
+def databases(draw):
+    """
+    Hypothesis strategy to generate dummy databases.
+
+    A database is a list of Row() entries.
+    """
+
+    db = draw(lists(rows(), min_size=1))
+
+    return db
