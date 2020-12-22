@@ -2,6 +2,9 @@
 
 import argparse
 import pathlib
+import sys
+
+from critchecker import database
 
 
 def read_args() -> argparse.Namespace:
@@ -32,6 +35,17 @@ def read_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
+def print_warn(msg: str) -> None:
+    """
+    Print a warning message to standard error.
+
+    Args:
+        msg: The message to print.
+    """
+
+    print(f"Warning: {msg}")
+
+
 def main(journal: str, report: pathlib.Path) -> None:
     """
     Core of critchecker.
@@ -40,6 +54,18 @@ def main(journal: str, report: pathlib.Path) -> None:
         journal: The URL of the Critmas launch journal.
         database: The path to a CSV report created by critchecker.
     """
+
+    data = []
+    try:
+        infile = report.open("r", newline="")
+    except FileNotFoundError:
+        # Fall-through.
+        pass
+    except OSError as exception:
+        print_warn(exception)
+    else:
+        with infile:
+            data = database.load(infile)
 
 
 def wrapper() -> None:
