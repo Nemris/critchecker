@@ -59,6 +59,22 @@ def exit_fatal(msg: str) -> None:
     sys.exit(f"Fatal: {msg}")
 
 
+def fetch_critique(url: str) -> comment.Comment:
+    """
+    Fetch a critique by its URL.
+
+    Args:
+        url: The URL to the critique.
+
+    Returns:
+        The critique.
+    """
+
+    ids = comment.extract_ids_from_url(url)
+
+    return comment.fetch(ids["deviation_id"], ids["type_id"], ids["comment_id"])
+
+
 def truncate_timestamp(timestamp: str) -> str:
     """
     Inelegantly truncate a timestamp and return the date segment.
