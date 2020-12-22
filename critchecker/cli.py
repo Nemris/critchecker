@@ -46,6 +46,17 @@ def print_warn(msg: str) -> None:
     print(f"Warning: {msg}")
 
 
+def exit_fatal(msg: str) -> None:
+    """
+    Print an error message to standard error and exit with code 1.
+
+    Args:
+        msg: The error message to print.
+    """
+
+    sys.exit(f"Fatal: {msg}")
+
+
 def main(journal: str, report: pathlib.Path) -> None:
     """
     Core of critchecker.
