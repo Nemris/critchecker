@@ -32,7 +32,7 @@ def read_args() -> argparse.Namespace:
 
 def main(journal: str, database: str) -> None:
     """
-    Core of crutchecker.
+    Core of critchecker.
 
     Args:
         journal: The URL of the Critmas launch journal.
