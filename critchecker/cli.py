@@ -93,6 +93,31 @@ def count_crit_words(crit: comment.Comment) -> int:
     return comment.count_words(comment.markup_to_text(crit.body))
 
 
+def crit_to_row(crit: comment.Comment) -> database.Row:
+    """
+    Compose a database row from critique attributes.
+
+    Args:
+        crit: The critique to analyze.
+
+    Returns:
+        A database row composed of select critique attributes.
+    """
+
+    row = database.Row(
+        crit_parent_id = crit.belongs_to,
+        crit_parent_type = crit.type_id,
+        crit_id = crit.id,
+        crit_posted_at = truncate_timestamp(crit.posted_at),
+        crit_edited_at = truncate_timestamp(crit.edited_at),
+        crit_author = crit.author,
+        crit_words = count_crit_words(crit),
+        crit_url = comment.assemble_url(crit.belongs_to, crit.type_id, crit.id)
+    )
+
+    return row
+
+
 def main(journal: str, report: pathlib.Path) -> None:
     """
     Core of critchecker.
