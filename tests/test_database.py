@@ -1,5 +1,6 @@
 """ Tests for critchecker.database. """
 
+import dataclasses
 import io
 import string
 
@@ -116,3 +117,27 @@ def test_rows_written_equal_to_database_len_plus_one(data):
         result = database.dump(data, stream)
 
     assert result == len(data) + 1
+
+
+@given(databases())
+def test_written_database_same_as_original(data):
+    """
+    Test that writing and loading the database doesn't alter it.
+    """
+
+    with io.StringIO(newline="") as stream:
+        database.dump(data, stream)
+        stream.seek(0)
+        result = database.load(stream)
+
+    for index, row in enumerate(result):
+        original = data[index]
+
+        assert int(row.crit_parent_id) == original.crit_parent_id
+        assert int(row.crit_parent_type) == original.crit_parent_type
+        assert int(row.crit_id) == original.crit_id
+        assert row.crit_posted_at == original.crit_posted_at
+        assert row.crit_edited_at == original.crit_edited_at
+        assert row.crit_author == original.crit_author
+        assert int(row.crit_words) == original.crit_words
+        assert row.crit_url == original.crit_url
