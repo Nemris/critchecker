@@ -1,5 +1,6 @@
 """ Functions and dataclasses that handle Critmas reports. """
 
+import csv
 import dataclasses
 import typing
 
@@ -30,3 +31,44 @@ class Row():  # pylint: disable=too-many-instance-attributes
     crit_author: str
     crit_words: int
     crit_url: str
+
+
+def load(infile: typing.TextIO) -> list[Row]:
+    """
+    Load a Critmas database.
+
+    Args:
+        infile: A .read()-supporting file-like object containing a
+            CSV document.
+
+    Returns:
+        A list of Critmas database rows.
+    """
+
+    return [Row(**row) for row in csv.DictReader(infile)]
+
+
+def dump(database: list[Row], outfile: typing.TextIO) -> int:
+    """
+    Dump a Critmas database.
+
+    Args:
+        database: A list of Critmas database rows.
+        outfile: A .write()-supporting file-like object.
+
+    Returns:
+        The number of written rows.
+    """
+
+    header = dataclasses.asdict(database[0]).keys()
+    writer = csv.DictWriter(outfile, header)
+    written = 0
+
+    writer.writeheader()
+    written += 1
+
+    for row in database:
+        writer.writerow(dataclasses.asdict(row))
+        written += 1
+
+    return written
