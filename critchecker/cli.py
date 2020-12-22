@@ -5,6 +5,7 @@ import pathlib
 import sys
 
 from critchecker import database
+from critchecker import deviation
 
 
 def read_args() -> argparse.Namespace:
@@ -65,6 +66,14 @@ def main(journal: str, report: pathlib.Path) -> None:
         journal: The URL of the Critmas launch journal.
         database: The path to a CSV report created by critchecker.
     """
+
+    try:
+        journal_id = deviation.extract_id(journal)
+        journal_category = deviation.extract_category(journal)
+    except ValueError as exception:
+        exit_fatal(f"{exception}.")
+
+    journal_type = deviation.typeid_of(journal_category)
 
     data = []
     try:
