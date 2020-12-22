@@ -17,7 +17,7 @@ def read_args() -> argparse.Namespace:
     """
 
     parser = argparse.ArgumentParser(
-        description="Extract and measure the length of DeviantART Critnas critiques."
+        description="Extract and measure the length of DeviantArt Critmas critiques."
     )
 
     parser.add_argument(
