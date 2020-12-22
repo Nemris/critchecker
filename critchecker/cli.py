@@ -141,7 +141,7 @@ def main(journal: str, report: pathlib.Path) -> None:
     except OSError as exception:
         # Let's not get scared if there are problems loading the
         # report.
-        print_warn(f"{exception}.")
+        print_warn(f"{exception}.\n")
     else:
         with infile:
             data = database.load(infile)
