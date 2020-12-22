@@ -21,22 +21,22 @@ def read_args() -> argparse.Namespace:
         help="the URL of the Critmas launch journal"
     )
     parser.add_argument(
-        "-d",
-        "--database",
+        "-r",
+        "--report",
         type=str,
-        help="the path to a CSV database created by critchecker"
+        help="the path to a CSV report created by critchecker"
     )
 
     return parser.parse_args()
 
 
-def main(journal: str, database: str) -> None:
+def main(journal: str, report: str) -> None:
     """
     Core of critchecker.
 
     Args:
         journal: The URL of the Critmas launch journal.
-        database: The path to a CSV database created by critchecker.
+        database: The path to a CSV report created by critchecker.
     """
 
 
