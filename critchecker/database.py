@@ -32,6 +32,19 @@ class Row():  # pylint: disable=too-many-instance-attributes
     crit_words: int
     crit_url: str
 
+    def __post_init__(self) -> None:
+        """
+        Convert the instance attributes expected to be int.
+
+        Raises:
+            ValueError: If converting to int fails.
+        """
+
+        self.crit_parent_id = int(self.crit_parent_id)
+        self.crit_parent_type = int(self.crit_parent_type)
+        self.crit_id = int(self.crit_id)
+        self.crit_words = int(self.crit_words)
+
 
 def load(infile: typing.TextIO) -> list[Row]:
     """
