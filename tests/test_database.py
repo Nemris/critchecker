@@ -1,6 +1,5 @@
 """ Tests for critchecker.database. """
 
-import dataclasses
 import io
 import string
 
@@ -9,7 +8,6 @@ from hypothesis.strategies import composite
 from hypothesis.strategies import dates
 from hypothesis.strategies import integers
 from hypothesis.strategies import lists
-from hypothesis.strategies import none
 from hypothesis.strategies import text
 
 from critchecker import database
