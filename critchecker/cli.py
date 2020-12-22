@@ -58,6 +58,26 @@ def exit_fatal(msg: str) -> None:
     sys.exit(f"Fatal: {msg}")
 
 
+def truncate_timestamp(timestamp: str) -> str:
+    """
+    Inelegantly truncate a timestamp and return the date segment.
+
+    Args:
+        timestamp: The timestamp to truncate.
+
+    Returns:
+        The date segment of the timestamp.
+    """
+
+    try:
+        date = timestamp.split("T")[0]
+    except AttributeError:
+        # Not tragic, just return an empty string.
+        date = ""
+
+    return date
+
+
 def main(journal: str, report: pathlib.Path) -> None:
     """
     Core of critchecker.
