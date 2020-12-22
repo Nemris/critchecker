@@ -6,6 +6,7 @@ import sys
 
 from critchecker import database
 from critchecker import deviation
+from critchecker import comment
 
 
 def read_args() -> argparse.Namespace:
@@ -76,6 +77,20 @@ def truncate_timestamp(timestamp: str) -> str:
         date = ""
 
     return date
+
+
+def count_crit_words(crit: comment.Comment) -> int:
+    """
+    Measure a critique's length in words, excluding URLs.
+
+    Args:
+        crit: The critique to check.
+
+    Returns:
+        The critique's length, in words.
+    """
+
+    return comment.count_words(comment.markup_to_text(crit.body))
 
 
 def main(journal: str, report: pathlib.Path) -> None:
