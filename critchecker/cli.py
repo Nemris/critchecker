@@ -1,6 +1,7 @@
 """ Command-line interface for critchecker. """
 
 import argparse
+import pathlib
 
 
 def read_args() -> argparse.Namespace:
@@ -23,14 +24,15 @@ def read_args() -> argparse.Namespace:
     parser.add_argument(
         "-r",
         "--report",
-        type=str,
+        type=pathlib.Path,
+        default=pathlib.Path.home().joinpath("critmas.csv"),
         help="the path to a CSV report created by critchecker"
     )
 
     return parser.parse_args()
 
 
-def main(journal: str, report: str) -> None:
+def main(journal: str, report: pathlib.Path) -> None:
     """
     Core of critchecker.
 
