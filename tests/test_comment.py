@@ -195,6 +195,8 @@ def test_comment_data_same_as_dict(comment_dict):
     data.
     """
 
+    blocks = json.loads(comment_dict["textContent"]["html"]["markup"])["blocks"]
+    features = json.loads(comment_dict["textContent"]["html"]["features"])
     result = comment.Comment(comment_dict)
 
     assert result.id == comment_dict["commentId"]
@@ -205,7 +207,8 @@ def test_comment_data_same_as_dict(comment_dict):
     assert result.edited_at == comment_dict["edited"]
     assert result.author_id == comment_dict["user"]["userId"]
     assert result.author == comment_dict["user"]["username"]
-    assert result.body == comment_dict["textContent"]["html"]["markup"]
+    assert result.body == "\n".join([block["text"] for block in blocks])
+    assert result.words == features[0]["data"]["words"]
 
 
 @given(commentpages())
