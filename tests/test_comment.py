@@ -292,15 +292,15 @@ def test_assembled_comment_urls_pass_validation(deviation_id, type_id, comment_i
     assert comment.is_url_valid(result)
 
 
-@given(anchor_tags())
-def test_extracted_urls_pass_validation(tag):
+@given(misc_urls())
+def test_extracted_urls_pass_validation(body):
     """
-    Test that the extracted comment URL passes validation.
+    Test that the extracted comment URLs pass validation.
     """
 
-   # result = [link for link in comment.yield_links(tag)]
+    result = comment.extract_comment_urls(body)
 
-    for link in comment.yield_links(tag):
+    for link in result:
         assert comment.is_url_valid(link)
 
 
