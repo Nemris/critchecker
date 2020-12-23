@@ -78,14 +78,14 @@ def rows(draw):
     """
 
     row = {
-        "crit_parent_id": draw(integers(1)),
-        "crit_parent_type": draw(integers(1)),
-        "crit_id": draw(integers(1)),
         "crit_posted_at": draw(human_dates()),
         "crit_edited_at": draw(human_dates()),
         "crit_author": draw(usernames()),
-        "crit_words": draw(integers(1)),
-        "crit_url": draw(url_strings())
+        "crit_words": draw(integers()),
+        "block_posted_at": draw(human_dates()),
+        "block_edited_at": draw(human_dates()),
+        "crit_url": draw(url_strings()),
+        "block_url": draw(url_strings())
     }
 
     return database.Row(**row)
