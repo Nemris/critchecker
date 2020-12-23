@@ -76,19 +76,48 @@ def comment_urls(draw):
 
 
 @composite
-def anchor_tags(draw):
+def bad_urls(draw):
     """
-    Hypothesis strategy to generate dummy anchor tags with valid
-    comment URLs.
+    Hypothesis strategy to generate dummy bad URLs.
 
-    Anchor tags must contain the \"href\" attribute.
+    A bad URL must contain the \"https://\" string, and may contain
+    any other string.
     """
 
-    url = draw(comment_urls())
-    label = draw(text())
-    tag = f"<a href=\"{url}\">{label}</a>"
+    url = "".join([
+        "https://",
+        "/".join(
+            draw(
+                lists(
+                    text(min_size=1),
+                    min_size=1
+                )
+            )
+        )
+    ])
 
-    return tag
+    return url
+
+
+@composite
+def misc_urls(draw):
+    """
+    Hypothesis strategy to generate valid and invalid dummy DA comment
+    URLs.
+
+    Invalid comment URLs must contain the \"https://\" prefix, and may
+    contain any other string.
+    """
+
+    urls = "\n".join(
+        draw(
+            lists(
+                comment_urls() | bad_urls()
+            )
+        )
+    )
+
+    return urls
 
 
 @composite
@@ -263,15 +292,15 @@ def test_assembled_comment_urls_pass_validation(deviation_id, type_id, comment_i
     assert comment.is_url_valid(result)
 
 
-@given(anchor_tags())
-def test_extracted_urls_pass_validation(tag):
+@given(misc_urls())
+def test_extracted_urls_pass_validation(body):
     """
-    Test that the extracted comment URL passes validation.
+    Test that the extracted comment URLs pass validation.
     """
 
-   # result = [link for link in comment.yield_links(tag)]
+    result = comment.extract_comment_urls(body)
 
-    for link in comment.yield_links(tag):
+    for link in result:
         assert comment.is_url_valid(link)
 
 

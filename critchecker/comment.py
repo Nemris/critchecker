@@ -296,20 +296,20 @@ def is_url_valid(url: str) -> bool:
     return bool(re.match(pattern, url))
 
 
-def yield_links(comment: str) -> collections.abc.Iterator[str]:
+def extract_comment_urls(comment: str) -> set[str]:
     """
-    Yield all the links in a comment, one by one.
+    Extract all the comment URLs in a comment, without duplicates..
 
     Args:
-        comment: The comment to extract links from.
+        comment: The comment to extract comment URLs from.
 
-    Yields:
-        The next link.
+    Returns:
+        The extracted and deduplicated comment URLs.
     """
 
-    html = bs4.BeautifulSoup(comment, features="html.parser")
+    pattern = r"https://www\.deviantart\.com/comments/\d+/\d+/\d+"
 
-    yield from (tag.get("href") for tag in html.find_all("a"))
+    return set(re.findall(pattern, comment))
 
 
 def markup_to_text(markup: str) -> str:
