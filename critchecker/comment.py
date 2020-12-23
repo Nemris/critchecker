@@ -2,6 +2,7 @@
 
 import collections
 import dataclasses
+import json
 import re
 import typing
 
@@ -42,6 +43,7 @@ class Comment():  # pylint: disable=too-many-instance-attributes
     author_id: int = None
     author: str = None
     body: str = None
+    worfs: int = None
 
     def __post_init__(self, comment: dict) -> None:
         """
@@ -64,7 +66,16 @@ class Comment():  # pylint: disable=too-many-instance-attributes
             self.edited_at = comment["edited"]
             self.author_id = comment["user"]["userId"]
             self.author = comment["user"]["username"]
-            self.body = comment["textContent"]["html"]["markup"]
+
+            structure = comment["textContent"]["html"]
+
+            blocks = json.loads(structure["markup"])["blocks"]
+            self.body = "\n".join([block["text"] for block in blocks])
+
+            features = json.loads(structure["features"])
+            for feature in features:
+                if feature["type"] == "WORD_COUNT_FEATURE":
+                    self.words = feature["data"]["words"]
         except KeyError as exception:
             raise ValueError("malformed comment data") from exception
 
