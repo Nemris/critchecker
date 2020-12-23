@@ -23,14 +23,14 @@ class Row():  # pylint: disable=too-many-instance-attributes
 
     # pylint: disable=unsubscriptable-object
 
-    crit_parent_id: int
-    crit_parent_type: int
-    crit_id: int
     crit_posted_at: str
     crit_edited_at: typing.Optional[str]
     crit_author: str
     crit_words: int
+    block_posted_at: str
+    block_edited_at: typing.Optional[str]
     crit_url: str
+    block_url: str
 
     def __post_init__(self) -> None:
         """
@@ -40,9 +40,6 @@ class Row():  # pylint: disable=too-many-instance-attributes
             ValueError: If converting to int fails.
         """
 
-        self.crit_parent_id = int(self.crit_parent_id)
-        self.crit_parent_type = int(self.crit_parent_type)
-        self.crit_id = int(self.crit_id)
         self.crit_words = int(self.crit_words)
 
 
