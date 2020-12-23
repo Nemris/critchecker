@@ -1,5 +1,7 @@
 """ Tests for critchecker.comment. """
 
+import json
+
 from hypothesis import given
 from hypothesis.strategies import booleans
 from hypothesis.strategies import composite
@@ -143,7 +145,25 @@ def comments(draw):
         },
         "textContent": {
             "html": {
-                "markup": draw(text())
+                "markup": json.dumps(
+                    {
+                        "blocks": [
+                            {
+                                "text": draw(text())
+                            }
+                        ]
+                    }
+                ),
+                "features": json.dumps(
+                    [
+                        {
+                            "type": "WORD_COUNT_FEATURE",
+                            "data": {
+                                "words": draw(integers(1))
+                            }
+                        }
+                    ]
+                )
             }
         }
     }
