@@ -121,24 +121,6 @@ def misc_urls(draw):
 
 
 @composite
-def comment_bodies(draw):
-    """
-    Hypothesis strategy to generate dummy DA comment bodies.
-
-    Bodies contain text, and must not be empty.
-    """
-
-    body = draw(
-        lists(
-            text(min_size=1),
-            min_size=1
-        )
-    )
-
-    return " ".join(body)
-
-
-@composite
 def comments(draw):
     """
     Hypothesis strategy to generate dummy DA Eclipse comment dicts.
@@ -297,15 +279,3 @@ def test_extracted_ids_from_url_are_ints(comment_url):
 
     for key in result:
         assert isinstance(result[key], int)
-
-
-@given(comment_bodies())
-def test_comment_word_count_is_always_positive_int(body):
-    """
-    Test that counting the words in a comment always returns a positive
-    integer.
-    """
-
-    result = comment.count_words(body)
-
-    assert result >= 0
