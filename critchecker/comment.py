@@ -229,7 +229,8 @@ def fetch_page(deviation_id: int, type_id: int, depth: int, offset: int) -> Comm
         "itemid": deviation_id,
         "maxdepth": depth,
         "offset": offset,
-        "order": "newest"
+        "order": "newest",
+        "limit": 50
     }
 
     try:
