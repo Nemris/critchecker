@@ -309,17 +309,3 @@ def extract_comment_urls(comment: str) -> set[str]:
     pattern = r"https://www\.deviantart\.com/comments/\d+/\d+/\d+"
 
     return set(re.findall(pattern, comment))
-
-
-def count_words(comment: str) -> int:
-    """
-    Count how many words there are in a comment.
-
-    Args:
-        comment: The comment whose length to check.
-
-    Returns:
-        The number of words in the comment.
-    """
-
-    return len(comment.split())
