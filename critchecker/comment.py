@@ -43,7 +43,7 @@ class Comment():  # pylint: disable=too-many-instance-attributes
     author_id: int = None
     author: str = None
     body: str = None
-    worfs: int = None
+    words: int = None
 
     def __post_init__(self, comment: dict) -> None:
         """
