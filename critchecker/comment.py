@@ -6,6 +6,7 @@ import json
 import re
 import typing
 
+import bs4
 import requests
 
 
@@ -309,3 +310,38 @@ def extract_comment_urls(comment: str) -> set[str]:
     pattern = r"https://www\.deviantart\.com/comments/\d+/\d+/\d+"
 
     return set(re.findall(pattern, comment))
+
+
+def markup_to_text(markup: str) -> str:
+    """
+    Remove all the HTML tags in a comment and replace \"<br>\" tags
+    with newlines.
+
+    Args:
+        markup: The comment to clean, as HTML data.
+
+    Returns:
+        The comment stripped of HTML tags and with \"<br>\" tags
+            replaced with newlines.
+    """
+
+    soup = bs4.BeautifulSoup(markup, features="html.parser")
+
+    for tag in soup.find_all("br"):
+        tag.replace_with("\n")
+
+    return soup.get_text()
+
+
+def count_words(comment: str) -> int:
+    """
+    Count how many words there are in a comment.
+
+    Args:
+        comment: The comment whose length to check.
+
+    Returns:
+        The number of words in the comment.
+    """
+
+    return len(comment.split())
