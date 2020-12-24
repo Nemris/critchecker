@@ -161,6 +161,8 @@ def comments(draw):
     Hypothesis strategy to generate dummy DA Eclipse comment dicts.
     """
 
+    # TODO: Implement "writer" comment type simulation.
+
     data = {
         "commentId": draw(comment_ids()),
         "parentId": draw(comment_ids()),
@@ -174,6 +176,7 @@ def comments(draw):
         },
         "textContent": {
             "html": {
+                "type": "draft",
                 "markup": json.dumps(
                     {
                         "blocks": [
