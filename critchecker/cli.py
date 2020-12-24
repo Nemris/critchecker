@@ -112,26 +112,28 @@ def count_crit_words(crit: comment.Comment) -> int:
     return comment.count_words(comment.markup_to_text(crit.body))
 
 
-def crit_to_row(crit: comment.Comment) -> database.Row:
+def to_row(block: comment.Comment, crit: comment.Comment) -> database.Row:
     """
-    Compose a database row from critique attributes.
+    Compose a database row from block and critique attributes.
 
     Args:
+        block: The critique block to analyze.
         crit: The critique to analyze.
 
     Returns:
-        A database row composed of select critique attributes.
+        A database row composed of select block and critique
+            attributes.
     """
 
     row = database.Row(
-        crit_parent_id = crit.belongs_to,
-        crit_parent_type = crit.type_id,
-        crit_id = crit.id,
-        crit_posted_at = truncate_timestamp(crit.posted_at),
-        crit_edited_at = truncate_timestamp(crit.edited_at),
+        crit_posted_at = format_timestamp(crit.posted_at),
+        crit_edited_at = format_timestamp(crit.edited_at),
         crit_author = crit.author,
-        crit_words = count_crit_words(crit),
-        crit_url = comment.assemble_url(crit.belongs_to, crit.type_id, crit.id)
+        crit_words = crit.words,
+        block_posted_at = format_timestamp(block.posted_at),
+        block_edited_at = format_timestamp(block.edited_at),
+        crit_url = comment.assemble_url(crit.belongs_to, crit.type_id, crit.id),
+        block_url = comment.assemble_url(block.belongs_to, block.type_id, block.id)
     )
 
     return row
