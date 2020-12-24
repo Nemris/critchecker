@@ -5,7 +5,6 @@ import string
 
 from hypothesis import given
 from hypothesis.strategies import composite
-from hypothesis.strategies import dates
 from hypothesis.strategies import datetimes
 from hypothesis.strategies import integers
 from hypothesis.strategies import lists
@@ -81,7 +80,7 @@ def human_dates(draw):
     A date must be in the format YYYY-MM-DD.
     """
 
-    date = draw(dates()).strftime("%Y-%m-%d")
+    date = draw(datetimes()).strftime("%m/%d/%Y %H%:%M")
 
     return date
 
