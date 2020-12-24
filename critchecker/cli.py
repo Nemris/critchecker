@@ -1,6 +1,7 @@
 """ Command-line interface for critchecker. """
 
 import argparse
+import datetime
 import pathlib
 import sys
 
@@ -75,24 +76,23 @@ def fetch_critique(url: str) -> comment.Comment:
     return comment.fetch(ids["deviation_id"], ids["type_id"], ids["comment_id"])
 
 
-def truncate_timestamp(timestamp: str) -> str:
+def format_timestamp(timestamp: str) -> str:
     """
-    Inelegantly truncate a timestamp and return the date segment.
+    Truncate and format a timestamp.
 
     Args:
-        timestamp: The timestamp to truncate.
+        timestamp: The timestamp to format.
 
     Returns:
-        The date segment of the timestamp.
+        The formatted timestamp.
     """
 
-    try:
-        date = timestamp.split("T")[0]
-    except AttributeError:
-        # Not tragic, just return an empty string.
-        date = ""
+    as_datetime = datetime.datetime.strptime(
+        timestamp.removesuffix("-0600"),
+        "%Y-%m-%dT%H:%M:%S"
+    )
 
-    return date
+    return as_datetime.strftime("%m/%d/%Y %H:%M")
 
 
 def count_crit_words(crit: comment.Comment) -> int:
