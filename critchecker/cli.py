@@ -75,20 +75,6 @@ def fetch_critique(url: str) -> comment.Comment:
     return comment.fetch(ids["deviation_id"], ids["type_id"], ids["comment_id"])
 
 
-def count_crit_words(crit: comment.Comment) -> int:
-    """
-    Measure a critique's length in words, excluding URLs.
-
-    Args:
-        crit: The critique to check.
-
-    Returns:
-        The critique's length, in words.
-    """
-
-    return comment.count_words(comment.markup_to_text(crit.body))
-
-
 def to_row(block: comment.Comment, crit: comment.Comment) -> database.Row:
     """
     Compose a database row from block and critique attributes.
