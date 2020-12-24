@@ -144,3 +144,14 @@ def test_written_database_same_as_original(data):
         result = database.load(stream)
 
     assert result == data
+
+
+@given(timestamps())
+def test_formatted_timestamp_not_empty(timestamp):
+    """
+    Test that formatting a timestamp doesn't return an empty string.
+    """
+
+    result = database.format_timestamp(timestamp)
+
+    assert result != ""
