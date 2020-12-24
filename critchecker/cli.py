@@ -159,6 +159,9 @@ def main(journal: str, report: pathlib.Path) -> None:
     data = []
     try:
         infile = report.open("r", newline="")
+    except FileNotFoundError:
+        # Fall-through.
+        pass
     except OSError as exception:
         # Let's not get scared if there are problems loading the
         # report.
