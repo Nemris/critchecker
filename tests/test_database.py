@@ -6,6 +6,7 @@ import string
 from hypothesis import given
 from hypothesis.strategies import composite
 from hypothesis.strategies import dates
+from hypothesis.strategies import datetimes
 from hypothesis.strategies import integers
 from hypothesis.strategies import lists
 from hypothesis.strategies import text
@@ -56,6 +57,20 @@ def usernames(draw):
     )
 
     return username
+
+
+@composite
+def timestamps(draw):
+    """
+    Hypothesis strategy to generate dummy DA timestamps.
+    """
+
+    timestamp = "-".join([
+        draw(datetimes()).strftime("%Y-%m-%dT%H:%M:%S"),
+        "0800"
+    ])
+
+    return timestamp
 
 
 @composite
