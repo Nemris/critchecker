@@ -87,8 +87,11 @@ def format_timestamp(timestamp: str) -> str:
         The formatted timestamp.
     """
 
+    if timestamp is None:
+        return ""
+
     as_datetime = datetime.datetime.strptime(
-        timestamp.removesuffix("-0600"),
+            timestamp[:-5],
         "%Y-%m-%dT%H:%M:%S"
     )
 
