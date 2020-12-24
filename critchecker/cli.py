@@ -193,6 +193,14 @@ def main(journal: str, report: pathlib.Path) -> None:
     except (comment.FetchingError, ValueError) as exception:
         exit_fatal(f"{exception}.")
 
+    try:
+        outfile = report.open("w", newline="")
+    except OSError as exception:
+        exit_fatal(f"{exception}.")
+    else:
+        with outfile:
+            database.dump(data, outfile)
+
 
 def wrapper() -> None:
     """
