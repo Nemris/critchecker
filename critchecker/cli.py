@@ -1,7 +1,6 @@
 """ Command-line interface for critchecker. """
 
 import argparse
-import datetime
 import pathlib
 import sys
 
@@ -76,28 +75,6 @@ def fetch_critique(url: str) -> comment.Comment:
     return comment.fetch(ids["deviation_id"], ids["type_id"], ids["comment_id"])
 
 
-def format_timestamp(timestamp: str) -> str:
-    """
-    Truncate and format a timestamp.
-
-    Args:
-        timestamp: The timestamp to format.
-
-    Returns:
-        The formatted timestamp.
-    """
-
-    if timestamp is None:
-        return ""
-
-    as_datetime = datetime.datetime.strptime(
-            timestamp[:-5],
-        "%Y-%m-%dT%H:%M:%S"
-    )
-
-    return as_datetime.strftime("%m/%d/%Y %H:%M")
-
-
 def count_crit_words(crit: comment.Comment) -> int:
     """
     Measure a critique's length in words, excluding URLs.
@@ -126,12 +103,12 @@ def to_row(block: comment.Comment, crit: comment.Comment) -> database.Row:
     """
 
     row = database.Row(
-        crit_posted_at = format_timestamp(crit.posted_at),
-        crit_edited_at = format_timestamp(crit.edited_at),
+        crit_posted_at = database.format_timestamp(crit.posted_at),
+        crit_edited_at = database.format_timestamp(crit.edited_at),
         crit_author = crit.author,
         crit_words = crit.words,
-        block_posted_at = format_timestamp(block.posted_at),
-        block_edited_at = format_timestamp(block.edited_at),
+        block_posted_at = database.format_timestamp(block.posted_at),
+        block_edited_at = database.format_timestamp(block.edited_at),
         crit_url = comment.assemble_url(crit.belongs_to, crit.type_id, crit.id),
         block_url = comment.assemble_url(block.belongs_to, block.type_id, block.id)
     )
