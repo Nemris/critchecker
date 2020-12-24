@@ -270,12 +270,11 @@ def test_extracted_urls_pass_validation(body):
 
 
 @given(comment_urls())
-def test_extracted_ids_from_url_are_ints(comment_url):
+def test_extracted_ids_from_url_are_three(comment_url):
     """
-    Test that the IDs extracred from a comment URLs are int instances.
+    Test that the IDs extracted from a comment URLs are three.
     """
 
     result = comment.extract_ids_from_url(comment_url)
 
-    for key in result:
-        assert isinstance(result[key], int)
+    assert len(result) == 3
