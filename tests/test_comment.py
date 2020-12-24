@@ -121,10 +121,47 @@ def misc_urls(draw):
 
 
 @composite
+def comment_markups(draw):
+    """
+    Hypothesis strategy to generate dummy DA comment body markups.
+
+    Body markups contain text, and may contain HTML tags.
+    """
+
+    markup = "".join([
+        draw(text()),
+        "<br />",
+        draw(text())
+    ])
+
+    return markup
+
+
+@composite
+def comment_bodies(draw):
+    """
+    Hypothesis strategy to generate dummy DA comment bodies.
+
+    Bodies contain text, and must not be empty.
+    """
+
+    body = draw(
+        lists(
+            text(min_size=1),
+            min_size=1
+        )
+    )
+
+    return " ".join(body)
+
+
+@composite
 def comments(draw):
     """
     Hypothesis strategy to generate dummy DA Eclipse comment dicts.
     """
+
+    # TODO: Implement "writer" comment type simulation.
 
     data = {
         "commentId": draw(comment_ids()),
@@ -139,6 +176,7 @@ def comments(draw):
         },
         "textContent": {
             "html": {
+                "type": "draft",
                 "markup": json.dumps(
                     {
                         "blocks": [
@@ -278,3 +316,26 @@ def test_extracted_ids_from_url_are_three(comment_url):
     result = comment.extract_ids_from_url(comment_url)
 
     assert len(result) == 3
+
+
+@given(comment_markups())
+def test_comment_markup_to_text_replaces_br_tag(comment_markup):
+    """
+    Test that converting comment markup to text strips \"<br>\" tags.
+    """
+
+    result = comment.markup_to_text(comment_markup)
+
+    assert "<br />" not in result
+
+
+@given(comment_bodies())
+def test_comment_word_count_is_always_positive_int(body):
+    """
+    Test that counting the words in a comment always returns a positive
+    integer.
+    """
+
+    result = comment.count_words(body)
+
+    assert result >= 0

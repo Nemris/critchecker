@@ -6,6 +6,7 @@ import json
 import re
 import typing
 
+import bs4
 import requests
 
 
@@ -56,6 +57,9 @@ class Comment():  # pylint: disable=too-many-instance-attributes
             ValueError: If a required key is missing from comment.
         """
 
+        # "Draft" comments have a word count ready, "writer" comments
+        # must be parsed.
+
         try:
             self.id = comment["commentId"]
             self.parent_id = comment["parentId"]
@@ -68,13 +72,19 @@ class Comment():  # pylint: disable=too-many-instance-attributes
 
             structure = comment["textContent"]["html"]
 
-            blocks = json.loads(structure["markup"])["blocks"]
-            self.body = "\n".join([block["text"] for block in blocks])
+            if structure["type"] == "writer":
+                html = structure["markup"]
 
-            features = json.loads(structure["features"])
-            for feature in features:
-                if feature["type"] == "WORD_COUNT_FEATURE":
-                    self.words = feature["data"]["words"]
+                self.body = markup_to_text(html)
+                self.words = count_words(self.body)
+            elif structure["type"] == "draft":
+                blocks = json.loads(structure["markup"])["blocks"]
+                self.body = "\n".join([block["text"] for block in blocks])
+
+                features = json.loads(structure["features"])
+                for feature in features:
+                    if feature["type"] == "WORD_COUNT_FEATURE":
+                        self.words = feature["data"]["words"]
         except KeyError as exception:
             raise ValueError("malformed comment data") from exception
 
@@ -309,3 +319,38 @@ def extract_comment_urls(comment: str) -> set[str]:
     pattern = r"https://www\.deviantart\.com/comments/\d+/\d+/\d+"
 
     return set(re.findall(pattern, comment))
+
+
+def markup_to_text(markup: str) -> str:
+    """
+    Remove all the HTML tags in a comment and replace \"<br>\" tags
+    with newlines.
+
+    Args:
+        markup: The comment to clean, as HTML data.
+
+    Returns:
+        The comment stripped of HTML tags and with \"<br>\" tags
+            replaced with newlines.
+    """
+
+    soup = bs4.BeautifulSoup(markup, features="html.parser")
+
+    for tag in soup.find_all("br"):
+        tag.replace_with("\n")
+
+    return soup.get_text()
+
+
+def count_words(comment: str) -> int:
+    """
+    Count how many words there are in a comment.
+
+    Args:
+        comment: The comment whose length to check.
+
+    Returns:
+        The number of words in the comment.
+    """
+
+    return len(comment.split())
