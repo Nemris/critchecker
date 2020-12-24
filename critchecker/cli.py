@@ -167,6 +167,32 @@ def main(journal: str, report: pathlib.Path) -> None:
         with infile:
             data = database.load(infile)
 
+    # We don't care about replies, only top-level comments.
+    depth = 0
+
+    # Any error here is fatal, so let's use one try...except only.
+    try:
+        for block in comment.yield_all(journal_id, journal_type, depth):
+            block_url = comment.assemble_url(block.belongs_to, block.type_id, block.id)
+
+            print(f"Analyzing {block_url}...")
+
+            for url in comment.extract_comment_urls(block.body):
+                crit = fetch_critique(url)
+
+                if crit is None:
+                    # Skip impossible edge cases.
+                    print_warn(f"critique {url} does not exist.")
+                    continue
+
+                if crit.author != block.author:
+                    print_warn(f"participant {block.author} doesn't match {crit.author}.")
+                    continue
+
+                data.append(to_row(block, crit))
+    except (comment.FetchingError, ValueError) as exception:
+        exit_fatal(f"{exception}.")
+
 
 def wrapper() -> None:
     """
