@@ -57,6 +57,9 @@ class Comment():  # pylint: disable=too-many-instance-attributes
             ValueError: If a required key is missing from comment.
         """
 
+        # "Draft" comments have a word count ready, "writer" comments
+        # must be parsed.
+
         try:
             self.id = comment["commentId"]
             self.parent_id = comment["parentId"]
@@ -69,13 +72,19 @@ class Comment():  # pylint: disable=too-many-instance-attributes
 
             structure = comment["textContent"]["html"]
 
-            blocks = json.loads(structure["markup"])["blocks"]
-            self.body = "\n".join([block["text"] for block in blocks])
+            if structure["type"] == "writer":
+                html = structure["markup"]
 
-            features = json.loads(structure["features"])
-            for feature in features:
-                if feature["type"] == "WORD_COUNT_FEATURE":
-                    self.words = feature["data"]["words"]
+                self.body = markup_to_text(html)
+                self.words = count_words(self.body)
+            elif structure["type"] == "draft":
+                blocks = json.loads(structure["markup"])["blocks"]
+                self.body = "\n".join([block["text"] for block in blocks])
+
+                features = json.loads(structure["features"])
+                for feature in features:
+                    if feature["type"] == "WORD_COUNT_FEATURE":
+                        self.words = feature["data"]["words"]
         except KeyError as exception:
             raise ValueError("malformed comment data") from exception
 
