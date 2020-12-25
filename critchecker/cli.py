@@ -34,6 +34,11 @@ def read_args() -> argparse.Namespace:
         default=pathlib.Path.home().joinpath("critmas.csv"),
         help="the path to a CSV report created by critchecker"
     )
+    parser.add_argument(
+        "--recheck",
+        action="store_true",
+        help="recheck all journal critiques and refresh their report entry if needed"
+    )
 
     return parser.parse_args()
 
@@ -167,13 +172,15 @@ def to_row(block: comment.Comment, crit: comment.Comment) -> database.Row:
     return row
 
 
-def main(journal: str, report: pathlib.Path) -> None:
+def main(journal: str, report: pathlib.Path, recheck: bool) -> None:
     """
     Core of critchecker.
 
     Args:
         journal: The URL of the Critmas launch journal.
         database: The path to a CSV report created by critchecker.
+        recheck: Whether to recheck all stored critiques and update the
+            corresponding report entries if needed.
     """
 
     try:
@@ -193,6 +200,17 @@ def main(journal: str, report: pathlib.Path) -> None:
             print(f"Block {block_url}:")
 
             for url in comment.extract_comment_urls(block.body):
+                try:
+                    index = database.get_index_by_crit_url(url, data)
+                except ValueError:
+                    # A similar row doesn't exist, so no problem.
+                    index = None
+                else:
+                    if not recheck:
+                        # Skipping a similar row.
+                        print(f"    S {url}")
+                        continue
+
                 crit = fetch_critique(url)
 
                 if crit is None:
@@ -207,15 +225,12 @@ def main(journal: str, report: pathlib.Path) -> None:
                 new_row = to_row(block, crit)
 
                 if new_row in data:
+                    # No point updating a perfect duplicate.
                     print(f"    S {url}")
                     continue
 
-                try:
-                    index = database.get_index_by_crit_url(url, data)
-                except ValueError:
-                    # A similar row doesn't exist, so no problem.
-                    pass
-                else:
+                if recheck and index is not None:
+                    # Update the critique data.
                     print(f"    U {url}")
                     data[index] = new_row
                     continue
