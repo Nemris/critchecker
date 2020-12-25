@@ -207,8 +207,8 @@ def main(journal: str, report: pathlib.Path) -> None:
                 new_row = to_row(block, crit)
 
                 if new_row in data:
-                    break
                     print(f"    S {url}")
+                    continue
 
                 try:
                     index = database.get_index_by_crit_url(url, data)
