@@ -218,6 +218,7 @@ def main(journal: str, report: pathlib.Path) -> None:
                 else:
                     print(f"    U {url}")
                     data[index] = new_row
+                    continue
 
                 print(f"    A {url}")
                 data.append(new_row)
