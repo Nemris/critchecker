@@ -59,6 +59,26 @@ def exit_fatal(msg: str) -> None:
     sys.exit(f"Fatal: {msg}")
 
 
+def get_journal_metadata(journal: str) -> tuple[int, int]:
+    """
+    Extract the journal ID and type ID.
+
+    Args:
+        journal: The URL of the Critmas journal.
+
+    Returns:
+        A tuple containing the journal ID and type ID.
+
+    Raises:
+        ValueError: If the journal URL is malformed.
+    """
+
+    journal_id = deviation.extract_id(journal)
+    journal_type = deviation.typeid_of(deviation.extract_category(journal))
+
+    return (journal_id, journal_type)
+
+
 def fetch_critique(url: str) -> comment.Comment:
     """
     Fetch a critique by its URL.
@@ -112,12 +132,9 @@ def main(journal: str, report: pathlib.Path) -> None:
     """
 
     try:
-        journal_id = deviation.extract_id(journal)
-        journal_category = deviation.extract_category(journal)
+        journal_id, journal_type = get_journal_metadata(journal)
     except ValueError as exception:
         exit_fatal(f"{exception}.")
-
-    journal_type = deviation.typeid_of(journal_category)
 
     data = []
     try:
