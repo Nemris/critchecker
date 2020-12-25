@@ -111,3 +111,26 @@ def format_timestamp(timestamp: str) -> str:
         raise ValueError(f"\"{timestamp}\": malformed timestamp") from exception
 
     return as_datetime.strftime("%m/%d/%Y %H:%M")
+
+
+def get_index_by_crit_url(url: str, data: list[Row]) -> int:
+    """
+    Find the index of a database row with a matching crit_url.
+
+    Args:
+        url: The crit_url to look for.
+        data: The database to parse.
+
+    Returns:
+        The index of the row whose crit_url attribute matches url.
+
+    Raises:
+        ValueError: If no matching row is found.
+    """
+
+    try:
+        index = next(index for index, row in enumerate(data) if row.crit_url == url)
+    except StopIteration as exception:
+        raise ValueError(f"\"{url}\" not found in database rows") from exception
+
+    return index
