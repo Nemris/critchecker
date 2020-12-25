@@ -106,6 +106,24 @@ def load_database(path: pathlib.Path) -> list[typing.Optional[database.Row]]:
     return data
 
 
+def save_database(data: list[database.Row], path: pathlib.Path) -> None:
+    """
+    Save a list of rows to a critchecker CSV database.
+
+    An existing CSV database will be overwritten.
+
+    Args:
+        data: The data to save.
+        path: The path to a critchecker CSV database.
+
+    Raises:
+        OSError: If an error happens while writing the CSV database.
+    """
+
+    with path.open("w", newline="") as outfile:
+        database.dump(data, outfile)
+
+
 def fetch_critique(url: str) -> comment.Comment:
     """
     Fetch a critique by its URL.
@@ -207,12 +225,9 @@ def main(journal: str, report: pathlib.Path) -> None:
         exit_fatal(f"{exception}.")
 
     try:
-        outfile = report.open("w", newline="")
+        save_database(data, report)
     except OSError as exception:
         exit_fatal(f"{exception}.")
-    else:
-        with outfile:
-            database.dump(data, outfile)
 
 
 def wrapper() -> None:
