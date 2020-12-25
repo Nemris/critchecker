@@ -136,7 +136,6 @@ def main(journal: str, report: pathlib.Path) -> None:
     # We don't care about replies, only top-level comments.
     depth = 0
 
-    # Any error here is fatal, so let's use one try...except only.
     try:
         for block in comment.yield_all(journal_id, journal_type, depth):
             block_url = comment.assemble_url(block.belongs_to, block.type_id, block.id)
@@ -155,7 +154,23 @@ def main(journal: str, report: pathlib.Path) -> None:
                     print_warn(f"participant {block.author} doesn't match {crit.author}.")
                     continue
 
-                data.append(to_row(block, crit))
+                new_row = to_row(block, crit)
+
+                if new_row in data:
+                    print(f"  Skipping {url}.")
+                    break
+
+                try:
+                    index = database.get_index_by_crit_url(url, data)
+                except ValueError:
+                    # A similar row doesn't exist, so no problem.
+                    pass
+                else:
+                    print(f"  Updating {url}.")
+                    data[index] = new_row
+
+                print(f"  Adding {url}.")
+                data.append(new_row)
     except (comment.FetchingError, ValueError) as exception:
         exit_fatal(f"{exception}.")
 
