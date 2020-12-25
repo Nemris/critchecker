@@ -3,6 +3,7 @@
 import argparse
 import pathlib
 import sys
+import typing
 
 from critchecker import database
 from critchecker import deviation
@@ -59,6 +60,70 @@ def exit_fatal(msg: str) -> None:
     sys.exit(f"Fatal: {msg}")
 
 
+def get_journal_metadata(journal: str) -> tuple[int, int]:
+    """
+    Extract the journal ID and type ID.
+
+    Args:
+        journal: The URL of the Critmas journal.
+
+    Returns:
+        A tuple containing the journal ID and type ID.
+
+    Raises:
+        ValueError: If the journal URL is malformed.
+    """
+
+    journal_id = deviation.extract_id(journal)
+    journal_type = deviation.typeid_of(deviation.extract_category(journal))
+
+    return (journal_id, journal_type)
+
+
+def load_database(path: pathlib.Path) -> list[typing.Optional[database.Row]]:
+    """
+    Load a critchecker CSV database.
+
+    Args:
+        path: The path to a CSV report created by critchecker.
+
+    Returns:
+        A list of rows read from the database, or an empty list.
+    """
+
+    # pylint: disable=unsubscriptable-object
+
+    data = []
+    try:
+        infile = path.open("r", newline="")
+    except OSError:
+        # Fall-through.
+        pass
+    else:
+        with infile:
+            data = database.load(infile)
+
+    return data
+
+
+def save_database(data: list[database.Row], path: pathlib.Path) -> None:
+    """
+    Save a list of rows to a critchecker CSV database.
+
+    An existing CSV database will be overwritten.
+
+    Args:
+        data: The data to save.
+        path: The path to a critchecker CSV database.
+
+    Raises:
+        OSError: If an error happens while writing the CSV database.
+    """
+
+    with path.open("w", newline="") as outfile:
+        database.dump(data, outfile)
+
+
 def fetch_critique(url: str) -> comment.Comment:
     """
     Fetch a critique by its URL.
@@ -112,26 +177,11 @@ def main(journal: str, report: pathlib.Path) -> None:
     """
 
     try:
-        journal_id = deviation.extract_id(journal)
-        journal_category = deviation.extract_category(journal)
+        journal_id, journal_type = get_journal_metadata(journal)
     except ValueError as exception:
         exit_fatal(f"{exception}.")
 
-    journal_type = deviation.typeid_of(journal_category)
-
-    data = []
-    try:
-        infile = report.open("r", newline="")
-    except FileNotFoundError:
-        # Fall-through.
-        pass
-    except OSError as exception:
-        # Let's not get scared if there are problems loading the
-        # report.
-        print_warn(f"{exception}.\n")
-    else:
-        with infile:
-            data = database.load(infile)
+    data = load_database(report)
 
     # We don't care about replies, only top-level comments.
     depth = 0
@@ -175,12 +225,9 @@ def main(journal: str, report: pathlib.Path) -> None:
         exit_fatal(f"{exception}.")
 
     try:
-        outfile = report.open("w", newline="")
+        save_database(data, report)
     except OSError as exception:
         exit_fatal(f"{exception}.")
-    else:
-        with outfile:
-            database.dump(data, outfile)
 
 
 def wrapper() -> None:
