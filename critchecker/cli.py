@@ -190,7 +190,7 @@ def main(journal: str, report: pathlib.Path) -> None:
         for block in comment.yield_all(journal_id, journal_type, depth):
             block_url = comment.assemble_url(block.belongs_to, block.type_id, block.id)
 
-            print(f"Analyzing {block_url}...")
+            print(f"Block {block_url}:")
 
             for url in comment.extract_comment_urls(block.body):
                 crit = fetch_critique(url)
@@ -207,8 +207,8 @@ def main(journal: str, report: pathlib.Path) -> None:
                 new_row = to_row(block, crit)
 
                 if new_row in data:
-                    print(f"  Skipping {url}.")
                     break
+                    print(f"    S {url}")
 
                 try:
                     index = database.get_index_by_crit_url(url, data)
@@ -216,11 +216,14 @@ def main(journal: str, report: pathlib.Path) -> None:
                     # A similar row doesn't exist, so no problem.
                     pass
                 else:
-                    print(f"  Updating {url}.")
+                    print(f"    U {url}")
                     data[index] = new_row
 
-                print(f"  Adding {url}.")
+                print(f"    A {url}")
                 data.append(new_row)
+
+            # Cosmetic newline.
+            print()
     except (comment.FetchingError, ValueError) as exception:
         exit_fatal(f"{exception}.")
 
