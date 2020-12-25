@@ -154,3 +154,16 @@ def test_formatted_timestamp_not_empty(timestamp):
     result = database.format_timestamp(timestamp)
 
     assert result != ""
+
+
+@given(databases())
+def test_finding_index_behaves_like_list_index(data):
+    """
+    Test that finding an index in a database works like calling the
+    .index() method of a list.
+    """
+
+    url = data[-1].crit_url
+    result = database.get_index_by_crit_url(url, data)
+
+    assert result == data.index(data[-1])
