@@ -3,6 +3,7 @@
 import argparse
 import pathlib
 import sys
+import typing
 
 from critchecker import database
 from critchecker import deviation
@@ -79,6 +80,32 @@ def get_journal_metadata(journal: str) -> tuple[int, int]:
     return (journal_id, journal_type)
 
 
+def load_database(path: pathlib.Path) -> list[typing.Optional[database.Row]]:
+    """
+    Load a critchecker CSV database.
+
+    Args:
+        path: The path to a CSV report created by critchecker.
+
+    Returns:
+        A list of rows read from the database, or an empty list.
+    """
+
+    # pylint: disable=unsubscriptable-object
+
+    data = []
+    try:
+        infile = path.open("r", newline="")
+    except OSError:
+        # Fall-through.
+        pass
+    else:
+        with infile:
+            data = database.load(infile)
+
+    return data
+
+
 def fetch_critique(url: str) -> comment.Comment:
     """
     Fetch a critique by its URL.
@@ -136,19 +163,7 @@ def main(journal: str, report: pathlib.Path) -> None:
     except ValueError as exception:
         exit_fatal(f"{exception}.")
 
-    data = []
-    try:
-        infile = report.open("r", newline="")
-    except FileNotFoundError:
-        # Fall-through.
-        pass
-    except OSError as exception:
-        # Let's not get scared if there are problems loading the
-        # report.
-        print_warn(f"{exception}.\n")
-    else:
-        with infile:
-            data = database.load(infile)
+    data = load_database(report)
 
     # We don't care about replies, only top-level comments.
     depth = 0
