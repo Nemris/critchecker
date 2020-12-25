@@ -147,11 +147,11 @@ def main(journal: str, report: pathlib.Path) -> None:
 
                 if crit is None:
                     # Skip impossible edge cases.
-                    print_warn(f"critique {url} does not exist.")
+                    print(f"  Critique {url} does not exist.")
                     continue
 
                 if crit.author != block.author:
-                    print_warn(f"participant {block.author} doesn't match {crit.author}.")
+                    print(f"  Participant {block.author} doesn't match {crit.author}.")
                     continue
 
                 new_row = to_row(block, crit)
