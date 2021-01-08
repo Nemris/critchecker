@@ -172,6 +172,32 @@ def to_row(block: comment.Comment, crit: comment.Comment) -> database.Row:
     return row
 
 
+def to_incomplete_row(block: comment.Comment, url: str) -> database.Row:
+    """
+    Compose a database row from block attributes and a critique URL.
+
+    The resulting row will lack most critique metadata, including only
+    the URL.
+
+    Args:
+        block: The critique block to analyze.
+        url: The URL to a critique.
+
+    Returns:
+        A database row composed of select block attributes and a
+            critique URL.
+    """
+
+    row = database.Row(
+        block_posted_at = database.format_timestamp(block.posted_at),
+        block_edited_at = database.format_timestamp(block.edited_at),
+        crit_url = url,
+        block_url = comment.assemble_url(block.belongs_to, block.type_id, block.id)
+    )
+
+    return row
+
+
 def main(journal: str, report: pathlib.Path, recheck: bool) -> None:
     """
     Core of critchecker.
@@ -214,8 +240,9 @@ def main(journal: str, report: pathlib.Path, recheck: bool) -> None:
                 crit = fetch_critique(url)
 
                 if crit is None:
-                    # Skip impossible edge cases.
-                    print(f"  Critique {url} does not exist.")
+                    # Critique URL malformed, append for humans.
+                    print(f"    ! {url}")
+                    data.append(to_incomplete_row(block, url))
                     continue
 
                 if crit.author != block.author:

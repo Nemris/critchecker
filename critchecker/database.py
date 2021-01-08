@@ -24,14 +24,14 @@ class Row():  # pylint: disable=too-many-instance-attributes
 
     # pylint: disable=unsubscriptable-object
 
-    crit_posted_at: str
-    crit_edited_at: typing.Optional[str]
-    crit_author: str
-    crit_words: int
-    block_posted_at: str
-    block_edited_at: typing.Optional[str]
-    crit_url: str
-    block_url: str
+    crit_posted_at: str = None
+    crit_edited_at: typing.Optional[str] = None
+    crit_author: str = None
+    crit_words: int = 0
+    block_posted_at: str = None
+    block_edited_at: typing.Optional[str] = None
+    crit_url: str = None
+    block_url: str = None
 
     def __post_init__(self) -> None:
         """
