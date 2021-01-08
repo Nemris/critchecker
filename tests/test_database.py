@@ -157,13 +157,13 @@ def test_formatted_timestamp_not_empty(timestamp):
 
 
 @given(databases())
-def test_finding_index_behaves_like_list_index(data):
+def test_finding_index_finds_first_row_with_same_crit_url(data):
     """
-    Test that finding an index in a database works like calling the
-    .index() method of a list.
+    Test that finding an index in a database finds the first row with a
+    specific crit_url, irrespective of the other instance attributes.
     """
 
     url = data[-1].crit_url
     result = database.get_index_by_crit_url(url, data)
 
-    assert result == data.index(data[-1])
+    assert data[result].crit_url == url
