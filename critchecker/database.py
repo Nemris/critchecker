@@ -27,7 +27,7 @@ class Row():  # pylint: disable=too-many-instance-attributes
     crit_posted_at: str = None
     crit_edited_at: typing.Optional[str] = None
     crit_author: str = None
-    crit_words: int = None
+    crit_words: int = 0
     block_posted_at: str = None
     block_edited_at: typing.Optional[str] = None
     crit_url: str = None
@@ -41,8 +41,7 @@ class Row():  # pylint: disable=too-many-instance-attributes
             ValueError: If converting to int fails.
         """
 
-        if self.crit_words is not None:
-            self.crit_words = int(self.crit_words)
+        self.crit_words = int(self.crit_words)
 
 
 def load(infile: typing.TextIO) -> list[Row]:
