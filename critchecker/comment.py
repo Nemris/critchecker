@@ -305,7 +305,7 @@ def is_url_valid(url: str) -> bool:
     return bool(re.match(pattern, url))
 
 
-def extract_comment_urls(comment: str) -> set[str]:
+def extract_comment_urls(comment: str) -> list[str]:
     """
     Extract all the comment URLs in a comment, without duplicates..
 
@@ -318,7 +318,7 @@ def extract_comment_urls(comment: str) -> set[str]:
 
     pattern = r"https://www\.deviantart\.com/comments/\d+/\d+/\d+"
 
-    return set(re.findall(pattern, comment))
+    return list(dict.fromkeys(re.findall(pattern, comment)))
 
 
 def markup_to_text(markup: str) -> str:
