@@ -14,6 +14,10 @@ class FetchingError(Exception):
     """ A network or HTTP error occurred while fetching data. """
 
 
+class NoSuchCommentError(Exception):
+    """ The requested comment does not exist. """
+
+
 @dataclasses.dataclass
 class Comment():  # pylint: disable=too-many-instance-attributes
     """
