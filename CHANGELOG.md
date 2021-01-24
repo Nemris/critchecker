@@ -1,6 +1,12 @@
 # Changelog
 
 ## Unreleased
+### Added
+ * Dependency on aiohttp.
+
+### Removed
+ * Dependency on requests.
+
 ### Changed
  * Timestamp is now in the YYYY/MM/DD HH:MM format.
 
