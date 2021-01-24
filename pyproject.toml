@@ -5,7 +5,7 @@ description = "Extract and measure the length of DeviantArt Critmas critiques."
 license = "MIT"
 authors = ["Nemris <nemris@protonmail.com>"]
 readme = "README.md"
-include = ["README.md"]
+include = ["README.md", "CHANGELOG.md"]
 
 [tool.poetry.dependencies]
 python = "^3.9"
