@@ -1,21 +1,20 @@
 """ Functions and dataclasses that handle DA comments. """
 
-import collections
 import dataclasses
 import json
 import re
-import typing
 
 import bs4
-import requests
 
-
-class FetchingError(Exception):
-    """ A network or HTTP error occurred while fetching data. """
+from critchecker import network
 
 
 class NoSuchCommentError(Exception):
     """ The requested comment does not exist. """
+
+
+class CommentPageFetchingError(Exception):
+    """ An error occurred while fetching comment page data. """
 
 
 @dataclasses.dataclass
@@ -182,113 +181,95 @@ def extract_ids_from_url(url: str) -> dict[int, int, int]:
         raise ValueError(f"'{url}': invalid comment URL") from exception
 
 
-def fetch(deviation_id: int, type_id: int, comment_id: int) -> typing.Optional[Comment]:
+async def fetch_page(
+    deviation_id: int,
+    type_id: int,
+    depth: int,
+    offset: int,
+    session: network.Session
+) -> CommentPage:
     """
-    Fetch a single comment to a deviation.
+    Asynchronously fetch a page of comments to a deviation.
+
+    The comments are ordered from newest to oldest, and a page's
+    maximum size is 50 comments.
 
     Args:
         deviation_id: The parent deviation's ID.
         type_id: The parent deviation's type ID.
-        comment_id: The comment ID.
-
-    Returns:
-        A single comment or None.
-
-    Raises:
-        FetchingError: If an error occurs while fetching the comment
-            data.
-        ValueError: If DA returns invalid comment data.
-    """
-
-    # TODO: Once PEP-604 is implemented, use the new union syntax.
-
-    # pylint: disable=unsubscriptable-object
-    # See https://github.com/PyCQA/pylint/issues/3882.
-
-    depth = 0
-    for comment in yield_all(deviation_id, type_id, depth):
-        if comment.id == comment_id:
-            return comment
-
-    return None
-
-
-def fetch_page(deviation_id: int, type_id: int, depth: int, offset: int) -> CommentPage:
-    """
-    Fetch a page of comments to a deviation, newest comments first.
-
-    Args:
-        deviation_id: The parent deviation's ID.
-        type_id: The parent deviation's type ID.
-        depth: The amount of replies to a comment. A depth of zero
-            returns only the topmost comment.
-        offset: The comment offset from where to fetch comments in
-            blocks of 10 per page.
+        depth: The amount of allowed replies to a comment. A depth of
+            zero returns only the topmost comments.
+        offset: The starting offset of the comment page.
+        session: A session to use for requesting data.
 
     Returns:
         A page of comments.
 
     Raises:
-        FetchingError: If an error occurs while fetching the comment
-            page data.
-        ValueError: If DA returns invalid comment page data.
+        ValueError: If instantiating the CommentPage fails.
+        CommentPageFetchingError: If an error occurs while fetching
+            comment page data.
     """
 
     api_url = "https://www.deviantart.com/_napi/shared_api/comments/thread"
-
-    # Assume we're most interested in newest comments.
     params = {
-        "typeid": type_id,
         "itemid": deviation_id,
+        "typeid": type_id,
+        "order": "newest",
         "maxdepth": depth,
         "offset": offset,
-        "order": "newest",
         "limit": 50
     }
+    timeout = 5
 
     try:
-        response = requests.get(api_url, params=params, timeout=5)
-        response.raise_for_status()
-    except requests.exceptions.HTTPError as exception:
-        raise FetchingError(f"HTTP error: '{exception}'") from exception
-    except requests.exceptions.ConnectionError as exception:
-        raise FetchingError(f"connection error: '{exception}'") from exception
-    except requests.exceptions.Timeout as exception:
-        raise FetchingError(f"connection timed out: '{exception}'") from exception
-    except requests.exceptions.RequestException as exception:
-        raise FetchingError(f"unknown error: '{exception}'") from exception
+        commentpage = await network.fetch_json(api_url, session, params=params, timeout=timeout)
+    except network.FetchingError as exception:
+        raise CommentPageFetchingError(exception) from exception
 
-    return CommentPage(response.json())
+    return CommentPage(commentpage)
 
 
-def yield_all(deviation_id: int, type_id: int, depth: int) -> collections.abc.Iterator[Comment]:
+async def fetch(url: str, session: network.Session) -> Comment:
     """
-    Fetch all the comments to a deviation and yield them one by one.
+    Asynchronously fetch a single comment to a deviation.
 
     Args:
-        deviation_id: The parent deviation's ID.
-        type_id: The parent deviation's type ID.
-        depth: The amount of replies to a comment. A depth of zero
-            returns only the topmost comment.
+        url: The URL to a comment.
+        session: A session to use for requesting data.
 
-    Yields:
-        The next comment.
+    Returns:
+        A single comment.
 
     Raises:
-        FetchingError: If an error occurs while fetching the comment
-            page data.
-        ValueError: If DA returns invalid comment page data.
+        ValueError: If instantiating a Comment fails.
+        NoSuchCommentError: If the requested comment is not found.
     """
 
+    ids = extract_ids_from_url(url)
+
+    depth = 0
     offset = 0
 
     while True:
-        commentpage = fetch_page(deviation_id, type_id, depth, offset)
+        try:
+            commentpage = await fetch_page(
+                ids["deviation_id"],
+                ids["type_id"],
+                depth,
+                offset,
+                session
+            )
+        except (ValueError, CommentPageFetchingError) as exception:
+            raise NoSuchCommentError(f"{url}: comment not found") from exception
 
-        yield from commentpage.comments
+        for comment in commentpage.comments:
+            if comment.id == ids["comment_id"]:
+                return comment
 
         if not commentpage.has_more:
-            break
+            # Reaching this point means that the comment doesn't exist.
+            raise NoSuchCommentError(f"{url}: comment not found")
 
         offset = commentpage.next_offset
 
