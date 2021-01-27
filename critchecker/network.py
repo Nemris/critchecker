@@ -15,8 +15,8 @@ class ConnectionTimedOutError(FetchingError):
     """ Connection timed out. """
 
 
-class Session(aiohttp.ClientSession):
-    """ Wrapper for aiohttp.ClientSession. Use as a context manager. """
+# Aliasing to avoid importing aiohttp in other modules to get sessions.
+Session = aiohttp.ClientSession
 
 
 async def fetch_json(url: str, session: Session, **kwargs: dict) -> dict:
