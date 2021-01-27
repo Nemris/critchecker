@@ -5,6 +5,7 @@
  * Dependency on aiohttp.
 
 ### Removed
+ * Database loading and updating.
  * Dependency on requests.
 
 ### Changed

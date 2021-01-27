@@ -64,27 +64,8 @@ As usual, replace `<url>` with the actual Critmas launch journal URL.
 The default location for the CSV file will be either `$HOME/critmas.csv` or
 `C:\Users\<username>\critmas.csv`, depending on your OS of choice.
 
-Note that the target file will be read if existing, and that **a malformed CSV
-database will halt the program**.
-Furthermore, **the target file will be overwritten** when `critchecker`
-finishes processing the new critiques.
-
-**The database reading functionality is deprecated, and will be removed in the
-next major release.**
-
-### Updating an existing database
-
-Since critiques may be edited for a maximum of two days after they have been
-posted, `critchecker` offers a mechanism to recheck the critiques and update
-the corresponding records in the database.
-In order to recheck critiques, use:
-
-```bash
-critchecker --recheck <url>
-```
-
-**The database updating functionality is deprecated, and will be removed in the
-next major release.**
+Note that **the target file will be overwritten** if already present when
+`critchecker` is ran.
 
 ## Building
 

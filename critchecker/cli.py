@@ -3,7 +3,6 @@
 import argparse
 import pathlib
 import sys
-import typing
 
 from critchecker import comment
 from critchecker import database
@@ -33,11 +32,6 @@ def read_args() -> argparse.Namespace:
         type=pathlib.Path,
         default=pathlib.Path.home().joinpath("critmas.csv"),
         help="the path to a CSV report created by critchecker"
-    )
-    parser.add_argument(
-        "--recheck",
-        action="store_true",
-        help="recheck all journal critiques and refresh their report entry if needed"
     )
 
     return parser.parse_args()
@@ -83,32 +77,6 @@ def get_journal_metadata(journal: str) -> tuple[int, int]:
     journal_type = deviation.typeid_of(deviation.extract_category(journal))
 
     return (journal_id, journal_type)
-
-
-def load_database(path: pathlib.Path) -> list[typing.Optional[database.Row]]:
-    """
-    Load a critchecker CSV database.
-
-    Args:
-        path: The path to a CSV report created by critchecker.
-
-    Returns:
-        A list of rows read from the database, or an empty list.
-    """
-
-    # pylint: disable=unsubscriptable-object
-
-    data = []
-    try:
-        infile = path.open("r", newline="")
-    except OSError:
-        # Fall-through.
-        pass
-    else:
-        with infile:
-            data = database.load(infile)
-
-    return data
 
 
 def save_database(data: list[database.Row], path: pathlib.Path) -> None:
@@ -198,7 +166,7 @@ def to_incomplete_row(block: comment.Comment, url: str) -> database.Row:
     return row
 
 
-def main(journal: str, report: pathlib.Path, recheck: bool) -> None:
+def main(journal: str, report: pathlib.Path) -> None:
     """
     Core of critchecker.
 
@@ -214,7 +182,7 @@ def main(journal: str, report: pathlib.Path, recheck: bool) -> None:
     except ValueError as exception:
         exit_fatal(f"{exception}.")
 
-    data = load_database(report)
+    data = []
 
     # We don't care about replies, only top-level comments.
     depth = 0
@@ -226,17 +194,6 @@ def main(journal: str, report: pathlib.Path, recheck: bool) -> None:
             print(f"Block {block_url}:")
 
             for url in comment.extract_comment_urls(block.body):
-                try:
-                    index = database.get_index_by_crit_url(url, data)
-                except ValueError:
-                    # A similar row doesn't exist, so no problem.
-                    index = None
-                else:
-                    if not recheck:
-                        # Skipping a similar row.
-                        print(f"    S {url}")
-                        continue
-
                 crit = fetch_critique(url)
 
                 if crit is None:
@@ -250,17 +207,6 @@ def main(journal: str, report: pathlib.Path, recheck: bool) -> None:
                     continue
 
                 new_row = to_row(block, crit)
-
-                if new_row in data:
-                    # No point updating a perfect duplicate.
-                    print(f"    S {url}")
-                    continue
-
-                if recheck and index is not None:
-                    # Update the critique data.
-                    print(f"    U {url}")
-                    data[index] = new_row
-                    continue
 
                 print(f"    A {url}")
                 data.append(new_row)
