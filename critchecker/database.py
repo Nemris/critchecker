@@ -113,6 +113,26 @@ def format_timestamp(timestamp: str) -> str:
     return as_datetime.strftime("%Y/%m/%d %H:%M")
 
 
+def timestamp_to_datetime(timestamp: str) -> datetime.datetime:
+    """
+    Parse a timestamp and return a datetime object.
+
+    Args:
+        timestamp: The timestamp to parse.
+
+    Returns:
+        The datetime obtained from parsing the timestamp.
+
+    Raises:
+        ValueError: If the timestamp is malformed.
+    """
+
+    try:
+        return datetime.datetime.strptime(timestamp, "%Y/%m/%d %H:%M")
+    except ValueError as exception:
+        raise ValueError(f"\"{timestamp}\": malformed timestamp") from exception
+
+
 def get_index_by_crit_url(url: str, data: list[Row]) -> int:
     """
     Find the index of a database row with a matching crit_url.
