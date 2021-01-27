@@ -4,12 +4,12 @@
 ### Added
  * Dependency on aiohttp.
 
+### Changed
+ * Timestamp is now in the YYYY/MM/DD HH:MM format.
+
 ### Removed
  * Database loading and updating.
  * Dependency on requests.
-
-### Changed
- * Timestamp is now in the YYYY/MM/DD HH:MM format.
 
 ## 0.1.1 - 2021-01-24
 ### Changed
