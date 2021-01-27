@@ -8,11 +8,11 @@ The blocks are sorted by newest, and the critique URL order is preserved.
 
 ## Requirements
 
-To run `critchecker`, you'll need [bs4][1] and [requests][2].
+To run `critchecker`, you'll need [bs4][1] and [aiohttp][2].
 Install them with:
 
 ```bash
-python3 -m pip install bs4 requests
+python3 -m pip install bs4 aiohttp
 ```
 
 Installing the dependencies manually is not required if you install
@@ -195,7 +195,7 @@ Check [LICENSE.txt][10] for further info.
 
 
 [1]:https://www.crummy.com/software/BeautifulSoup/bs4/doc/
-[2]:https://requests.readthedocs.io/en/master/
+[2]:https://docs.aiohttp.org/
 [3]:https://python-poetry.org/
 [4]:https://www.pylint.org/
 [5]:https://pytest.org/
