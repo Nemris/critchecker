@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+### Changed
+ * Timestamp is now in the YYYY/MM/DD HH:MM format.
+
 ## 0.1.1 - 2021-01-24
 ### Changed
  * Update dependencies.

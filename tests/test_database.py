@@ -80,7 +80,7 @@ def human_dates(draw):
     A date must be in the format YYYY-MM-DD.
     """
 
-    date = draw(datetimes()).strftime("%m/%d/%Y %H%:%M")
+    date = draw(datetimes()).strftime("%Y/%m/%d %H%:%M")
 
     return date
 
