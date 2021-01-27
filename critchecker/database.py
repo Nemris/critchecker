@@ -110,7 +110,7 @@ def format_timestamp(timestamp: str) -> str:
     except (ValueError, TypeError) as exception:
         raise ValueError(f"\"{timestamp}\": malformed timestamp") from exception
 
-    return as_datetime.strftime("%m/%d/%Y %H:%M")
+    return as_datetime.strftime("%Y/%m/%d %H:%M")
 
 
 def get_index_by_crit_url(url: str, data: list[Row]) -> int:
