@@ -5,9 +5,9 @@ import pathlib
 import sys
 import typing
 
+from critchecker import comment
 from critchecker import database
 from critchecker import deviation
-from critchecker import comment
 
 
 def read_args() -> argparse.Namespace:
