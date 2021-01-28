@@ -31,7 +31,7 @@ def read_args() -> argparse.Namespace:
         "--report",
         type=pathlib.Path,
         default=pathlib.Path.home().joinpath("critmas.csv"),
-        help="the path to a CSV report created by critchecker"
+        help="the path and filename to save the CSV report as"
     )
 
     return parser.parse_args()
