@@ -37,17 +37,6 @@ def read_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def print_warn(msg: str) -> None:
-    """
-    Print a warning message to standard error.
-
-    Args:
-        msg: The message to print.
-    """
-
-    print(f"Warning: {msg}")
-
-
 def exit_fatal(msg: str) -> None:
     """
     Print an error message to standard error and exit with code 1.
