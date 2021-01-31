@@ -284,36 +284,27 @@ async def fetch(url: str, session: network.Session) -> Comment:
         A single comment.
 
     Raises:
-        ValueError: If instantiating a Comment fails.
         NoSuchCommentError: If the requested comment is not found.
     """
 
     ids = extract_ids_from_url(url)
 
     depth = 0
-    offset = 0
-
-    while True:
-        try:
-            commentpage = await fetch_page(
+    try:
+        async for commentpage in fetch_pages(
                 ids["deviation_id"],
                 ids["type_id"],
                 depth,
-                offset,
                 session
-            )
-        except (ValueError, CommentPageFetchingError) as exception:
-            raise NoSuchCommentError(f"{url}: comment not found") from exception
+        ):
+            for comment in commentpage.comments:
+                if comment.id == ids["comment_id"]:
+                    return comment
+    except (ValueError, CommentPageFetchingError) as exception:
+        raise NoSuchCommentError(f"\"{url}\": comment not found") from exception
 
-        for comment in commentpage.comments:
-            if comment.id == ids["comment_id"]:
-                return comment
-
-        if not commentpage.has_more:
-            # Reaching this point means that the comment doesn't exist.
-            raise NoSuchCommentError(f"{url}: comment not found")
-
-        offset = commentpage.next_offset
+    # Reaching this point means no matching comment was found.
+    raise NoSuchCommentError(f"\"{url}\": comment not found")
 
 
 def is_url_valid(url: str) -> bool:
