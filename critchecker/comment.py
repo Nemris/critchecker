@@ -230,6 +230,48 @@ async def fetch_page(
     return CommentPage(commentpage)
 
 
+async def fetch_pages(
+    deviation_id: int,
+    type_id: int,
+    depth: int,
+    session: network.Session
+) -> CommentPage:
+    """
+    Asynchronously fetch all the pages of comments to a deviation.
+
+    Unfortunately, fetching a comment page depends on knowing the next
+    offset, so there's currently no way to fetch more pages in
+    parallel.
+
+    Args:
+        deviation_id: The parent deviation's ID.
+        type_id: The parent deviation's type ID.
+        depth: The amount of allowed replies to a comment. A depth of
+            zero returns only the topmost comments.
+        session: A session to use for requesting data.
+
+    Yields:
+        The next comment page.
+
+    Raises:
+        ValueError: If instantiating the CommentPage fails.
+        CommentPageFetchingError: If an error occurs while fetching
+            comment page data.
+    """
+
+    offset = 0
+    while True:
+        # Let exceptions bubble up.
+        commentpage = await fetch_page(deviation_id, type_id, depth, offset, session)
+
+        yield commentpage
+
+        if not commentpage.has_more:
+            break
+
+        offset = commentpage.next_offset
+
+
 async def fetch(url: str, session: network.Session) -> Comment:
     """
     Asynchronously fetch a single comment to a deviation.
