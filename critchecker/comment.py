@@ -155,7 +155,7 @@ def assemble_url(deviation_id: int, type_id: int, comment_id: int) -> str:
     return "/".join([base_url, relative_url])
 
 
-def extract_ids_from_url(url: str) -> dict[int, int, int]:
+def extract_ids_from_url(url: str) -> tuple[int, int, int]:
     """
     Obtain the IDs from a comment URL.
 
@@ -163,7 +163,8 @@ def extract_ids_from_url(url: str) -> dict[int, int, int]:
         url: The URL to a comment.
 
     Returns:
-        The extracted type ID, deviation ID and comment ID as ints.
+        A tuple of the extracted type ID, deviation ID and comment ID
+            as ints, in order.
 
     Raises:
         ValueError: If the comment URL is invalid.
@@ -172,11 +173,7 @@ def extract_ids_from_url(url: str) -> dict[int, int, int]:
     split_url = url.split("/")
 
     try:
-        return {
-            "type_id": int(split_url[-3]),
-            "deviation_id": int(split_url[-2]),
-            "comment_id": int(split_url[-1])
-        }
+        return int(split_url[-3]), int(split_url[-2]), int(split_url[-1])
     except (IndexError, ValueError) as exception:
         raise ValueError(f"'{url}': invalid comment URL") from exception
 
@@ -287,18 +284,13 @@ async def fetch(url: str, session: network.Session) -> Comment:
         NoSuchCommentError: If the requested comment is not found.
     """
 
-    ids = extract_ids_from_url(url)
+    type_id, deviation_id, comment_id = extract_ids_from_url(url)
 
     depth = 0
     try:
-        async for commentpage in fetch_pages(
-                ids["deviation_id"],
-                ids["type_id"],
-                depth,
-                session
-        ):
+        async for commentpage in fetch_pages(deviation_id, type_id, depth, session):
             for comment in commentpage.comments:
-                if comment.id == ids["comment_id"]:
+                if comment.id == comment_id:
                     return comment
     except (ValueError, CommentPageFetchingError) as exception:
         raise NoSuchCommentError(f"'{url}': comment not found") from exception
