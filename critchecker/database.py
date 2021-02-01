@@ -108,7 +108,7 @@ def format_timestamp(timestamp: str) -> str:
             "%Y-%m-%dT%H:%M:%S"
         )
     except (ValueError, TypeError) as exception:
-        raise ValueError(f"\"{timestamp}\": malformed timestamp") from exception
+        raise ValueError(f"'{timestamp}': malformed timestamp") from exception
 
     return as_datetime.strftime("%Y/%m/%d %H:%M")
 
@@ -130,7 +130,7 @@ def timestamp_to_datetime(timestamp: str) -> datetime.datetime:
     try:
         return datetime.datetime.strptime(timestamp, "%Y/%m/%d %H:%M")
     except ValueError as exception:
-        raise ValueError(f"\"{timestamp}\": malformed timestamp") from exception
+        raise ValueError(f"'{timestamp}': malformed timestamp") from exception
 
 
 def get_index_by_crit_url(url: str, data: list[Row]) -> int:
@@ -151,6 +151,6 @@ def get_index_by_crit_url(url: str, data: list[Row]) -> int:
     try:
         index = next(index for index, row in enumerate(data) if row.crit_url == url)
     except StopIteration as exception:
-        raise ValueError(f"\"{url}\" not found in database rows") from exception
+        raise ValueError(f"'{url}' not found in database rows") from exception
 
     return index

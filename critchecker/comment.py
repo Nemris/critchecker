@@ -301,10 +301,10 @@ async def fetch(url: str, session: network.Session) -> Comment:
                 if comment.id == ids["comment_id"]:
                     return comment
     except (ValueError, CommentPageFetchingError) as exception:
-        raise NoSuchCommentError(f"\"{url}\": comment not found") from exception
+        raise NoSuchCommentError(f"'{url}': comment not found") from exception
 
     # Reaching this point means no matching comment was found.
-    raise NoSuchCommentError(f"\"{url}\": comment not found")
+    raise NoSuchCommentError(f"'{url}': comment not found")
 
 
 def is_url_valid(url: str) -> bool:
