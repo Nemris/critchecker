@@ -170,10 +170,8 @@ def extract_ids_from_url(url: str) -> tuple[int, int, int]:
         ValueError: If the comment URL is invalid.
     """
 
-    split_url = url.split("/")
-
     try:
-        return int(split_url[-3]), int(split_url[-2]), int(split_url[-1])
+        return tuple(int(num) for num in url.split("/")[-3:])
     except (IndexError, ValueError) as exception:
         raise ValueError(f"'{url}': invalid comment URL") from exception
 
