@@ -8,7 +8,7 @@ The blocks are sorted by newest, and the critique URL order is preserved.
 
 ## Requirements
 
-To run `critchecker`, you'll need [bs4][1] and [aiohttp][2].
+To run `critchecker`, you'll need [bs4][1], [tqdm][2] and [aiohttp][3]].
 Install them with:
 
 ```bash
@@ -80,7 +80,7 @@ subdirectory.
 
 ### Build dependencies
 
-To build `critchecker`, you will need [poetry][3] to manage project building,
+To build `critchecker`, you will need [poetry][4] to manage project building,
 virtual environments and dependencies.
 
 ## Contributing
@@ -93,7 +93,7 @@ poetry install
 ```
 
 This will setup a virtual environment with all the required dependencies,
-including [pylint][4], [pytest][5] and [hypothesis][6].
+including [pylint][5], [pytest][6] and [hypothesis][7].
 Moreover, it'll make `critchecker` itself be installed inside the virtualenv,
 and thus executable with:
 
@@ -160,28 +160,29 @@ poetry run pytest --hypothesis-show-statistics
 
 ## Credits
 
-This tool wouldn't exist if not for a certain [BeckyKidus][7] - it's thanks
+This tool wouldn't exist if not for a certain [BeckyKidus][8] - it's thanks
 to this noodle's encouragement and typo-spotting sight if `critchecker` was
 even ready for Critmas 2020.
 Checking out her art is highly recommended.
 
-A thank you goes to [neurotype][8] too - as the Critmas 2020 host, she sure had
+A thank you goes to [neurotype][9] too - as the Critmas 2020 host, she sure had
 a say on this tool's database format.
 
 ## License
 
-This program is licensed under the terms of the [MIT][9] license.
+This program is licensed under the terms of the [MIT][10] license.
 
-Check [LICENSE.txt][10] for further info.
+Check [LICENSE.txt][11] for further info.
 
 
 [1]:https://www.crummy.com/software/BeautifulSoup/bs4/doc/
-[2]:https://docs.aiohttp.org/
-[3]:https://python-poetry.org/
-[4]:https://www.pylint.org/
-[5]:https://pytest.org/
-[6]:https://hypothesis.readthedocs.io/
-[7]:https://www.deviantart.com/beckykidus
-[8]:https://www.deviantart.com/neurotype
-[9]:https://choosealicense.com/licenses/mit/
-[10]:./LICENSE.txt
+[2]:https://tqdm.github.io/
+[3]:https://docs.aiohttp.org/
+[4]:https://python-poetry.org/
+[5]:https://www.pylint.org/
+[6]:https://pytest.org/
+[7]:https://hypothesis.readthedocs.io/
+[8]:https://www.deviantart.com/beckykidus
+[9]:https://www.deviantart.com/neurotype
+[10]:https://choosealicense.com/licenses/mit/
+[11]:./LICENSE.txt

@@ -2,6 +2,7 @@
 
 ## Unreleased
 ### Added
+ * Dependency on tqdm.
  * Dependency on aiohttp.
 
 ### Changed
