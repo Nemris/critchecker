@@ -12,14 +12,14 @@ class Row():  # pylint: disable=too-many-instance-attributes
     A single row in a Critmas report.
 
     Args:
-        crit_parent_id: The parent deviation's ID.
-        crit_parent_type: The parent deviation's type ID.
-        crit_id: The critique's ID.
         crit_posted_at: The critique's timestamp.
         crit_edited_at: The critique's edited timestamp, if any.
         crit_author: The critique's author.
-        crit_words: The critique's length in words.
+        crit_words: Thw critique's length in words.
+        block_posted_at: The critique block's timestamp.
+        block_edited_at: The critique block's edited timestamp, if any.
         crit_url: The critique's URL.
+        block_url: The critique block's URL.
     """
 
     # pylint: disable=unsubscriptable-object
