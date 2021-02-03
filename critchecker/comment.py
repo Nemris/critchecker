@@ -21,6 +21,14 @@ class CommentPageFetchingError(CommentError):
     """ An error occurred while fetching comment page data. """
 
 
+class BadCommentError(CommentError):
+    """ The API returned malformed comment data. """
+
+
+class BadCommentPageError(CommentError):
+    """ The API returned malformed comment page data. """
+
+
 @dataclasses.dataclass
 class Comment():  # pylint: disable=too-many-instance-attributes
     """
@@ -93,7 +101,7 @@ class Comment():  # pylint: disable=too-many-instance-attributes
                     if feature["type"] == "WORD_COUNT_FEATURE":
                         self.words = feature["data"]["words"]
         except KeyError as exception:
-            raise ValueError("malformed comment data") from exception
+            raise BadCommentError("malformed comment data") from exception
 
 
 @dataclasses.dataclass
@@ -131,8 +139,8 @@ class CommentPage():
             self.has_more = commentpage["hasMore"]
             self.next_offset = commentpage["nextOffset"]
             self.comments = [Comment(comment) for comment in commentpage["thread"]]
-        except (KeyError, ValueError) as exception:
-            raise ValueError("malformed comment page data") from exception
+        except (KeyError, BadCommentError) as exception:
+            raise BadCommentPageError("malformed comment page data") from exception
 
 
 def assemble_url(deviation_id: int, type_id: int, comment_id: int) -> str:
@@ -205,7 +213,7 @@ async def fetch_page(
         A page of comments.
 
     Raises:
-        ValueError: If instantiating the CommentPage fails.
+        BadCommentPageError: If instantiating the CommentPage fails.
         CommentPageFetchingError: If an error occurs while fetching
             comment page data.
     """
@@ -253,7 +261,7 @@ async def fetch_pages(
         The next comment page.
 
     Raises:
-        ValueError: If instantiating the CommentPage fails.
+        BadCommentPageError: If instantiating the CommentPage fails.
         CommentPageFetchingError: If an error occurs while fetching
             comment page data.
     """
@@ -283,19 +291,18 @@ async def fetch(url: str, session: network.Session) -> Comment:
         A single comment.
 
     Raises:
+        BadCommentPageError: If instantiating the CommentPage fails.
         NoSuchCommentError: If the requested comment is not found.
     """
 
     type_id, deviation_id, comment_id = extract_ids_from_url(url)
 
+    # Let exceptions bubble up.
     depth = 0
-    try:
-        async for commentpage in fetch_pages(deviation_id, type_id, depth, session):
-            for comment in commentpage.comments:
-                if comment.id == comment_id:
-                    return comment
-    except (ValueError, CommentPageFetchingError) as exception:
-        raise NoSuchCommentError(f"'{url}': comment not found") from exception
+    async for commentpage in fetch_pages(deviation_id, type_id, depth, session):
+        for comment in commentpage.comments:
+            if comment.id == comment_id:
+                return comment
 
     # Reaching this point means no matching comment was found.
     raise NoSuchCommentError(f"'{url}': comment not found")
