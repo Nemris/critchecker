@@ -1,5 +1,7 @@
 """ Functions that handle network requests. """
 
+import asyncio
+
 import aiohttp
 
 
@@ -52,3 +54,5 @@ async def fetch_json(url: str, session: Session, **kwargs: dict) -> dict:
         aiohttp.ClientError
     ) as exception:
         raise FetchingError(exception) from exception
+    except asyncio.TimeoutError as exception:
+        raise ConnectionTimedOutError(exception) from exception
