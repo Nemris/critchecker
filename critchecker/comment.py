@@ -227,10 +227,9 @@ async def fetch_page(
         "offset": offset,
         "limit": 50
     }
-    timeout = 5
 
     try:
-        commentpage = await network.fetch_json(api_url, session, params=params, timeout=timeout)
+        commentpage = await network.fetch_json(api_url, session, params=params)
     except network.FetchingError as exception:
         raise CommentPageFetchingError(exception) from exception
 
