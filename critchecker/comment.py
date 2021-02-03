@@ -9,11 +9,15 @@ import bs4
 from critchecker import network
 
 
-class NoSuchCommentError(Exception):
+class CommentError(Exception):
+    """ Common base class for exceptions related to comments. """
+
+
+class NoSuchCommentError(CommentError):
     """ The requested comment does not exist. """
 
 
-class CommentPageFetchingError(Exception):
+class CommentPageFetchingError(CommentError):
     """ An error occurred while fetching comment page data. """
 
 
