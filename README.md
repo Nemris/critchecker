@@ -45,9 +45,6 @@ an example invocation will be:
 critchecker "https://www.deviantart.com/neurotype/journal/Critmas-2020-HERE-WE-GO-864966965"
 ```
 
-**At present, `critchecker` is very slow - the cause has been identified and
-will be fixed in the next major release.**
-
 ### The CSV file path
 
 It's possible to force a specific path to be used in place of the default one

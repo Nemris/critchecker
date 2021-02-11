@@ -6,6 +6,7 @@
  * Dependency on aiohttp.
 
 ### Changed
+ * Fetch URLs asynchronously.
  * Timestamp is now in the YYYY/MM/DD HH:MM format.
 
 ### Removed

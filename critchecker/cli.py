@@ -1,12 +1,16 @@
 """ Command-line interface for critchecker. """
 
 import argparse
+import asyncio
 import pathlib
 import sys
+
+import tqdm.asyncio
 
 from critchecker import comment
 from critchecker import database
 from critchecker import deviation
+from critchecker import network
 
 
 def read_args() -> argparse.Namespace:
@@ -68,6 +72,114 @@ def get_journal_metadata(journal: str) -> tuple[int, int]:
     return (journal_id, journal_type)
 
 
+async def fetch_blocks(
+    journal_id: int,
+    journal_type: int,
+    session: network.Session
+) -> list[comment.Comment]:
+    """
+    Fetch the critique blocks posted as comments to a launch journal.
+
+    Valid critique blocks contain at least one link to a critique.
+
+    Args:
+        journal_id: The launch journal's ID.
+        journal_type: The launch journal's type ID.
+        session: A session to use for requesting data.
+
+    Returns:
+        The comments containing at least one link to another comment.
+
+    Raises:
+        comment.CommentError: If an error occurred while fetching the
+            critique blocks.
+    """
+
+    depth = 0
+
+    blocks = []
+    progress_bar = tqdm.asyncio.tqdm(
+        comment.fetch_pages(
+            journal_id, journal_type, depth, session
+        ),
+        desc="Analyzing comment pages",
+        unit="page"
+    )
+    async for page in progress_bar:
+        for block in page.comments:
+            if comment.extract_comment_urls(block.body):
+                blocks.append(block)
+
+    return blocks
+
+
+def initialize_database(blocks: list[comment.Comment]) -> list[database.Row]:
+    """
+    Initialize the critique database with the blocks' available data.
+
+    Args:
+        blocks: The blocks containing critique links.
+
+    Returns:
+        The critique database populated with the available block data,
+            without duplicate critiques.
+    """
+
+    data = []
+    for block in blocks:
+        block_url = comment.assemble_url(block.belongs_to, block.type_id, block.id)
+
+        for crit_url in comment.extract_comment_urls(block.body):
+            try:
+                database.get_index_by_crit_url(crit_url, data)
+                continue
+            except ValueError:
+                # No duplicate critiques, fall-through.
+                pass
+
+            data.append(
+                database.Row(
+                    block_posted_at = database.format_timestamp(block.posted_at),
+                    block_edited_at = database.format_timestamp(block.edited_at),
+                    crit_url = crit_url,
+                    block_url = block_url
+                )
+            )
+
+    return data
+
+
+async def fill_row(row: database.Row, session: network.Session) -> database.Row:
+    """
+    Fetch the critique data belonging to a database row and fill it.
+
+    Args:
+        data: An initialized database row.
+        session: A session to use for requesting data.
+
+    Returns:
+        The database row with the missing fields filled by the critique
+            data.
+
+    Raises:
+        comment.CommentError: If an error occurred while fetching the
+            critique.
+    """
+
+    try:
+        critique = await comment.fetch(row.crit_url, session)
+    except comment.NoSuchCommentError:
+        # Probably a hidden critique - return the unchanged row.
+        return row
+
+    row.crit_posted_at = database.format_timestamp(critique.posted_at)
+    row.crit_edited_at = database.format_timestamp(critique.edited_at)
+    row.crit_author = critique.author
+    row.crit_words = critique.words
+
+    return row
+
+
 def save_database(data: list[database.Row], path: pathlib.Path) -> None:
     """
     Save a list of rows to a critchecker CSV database.
@@ -86,76 +198,7 @@ def save_database(data: list[database.Row], path: pathlib.Path) -> None:
         database.dump(data, outfile)
 
 
-def fetch_critique(url: str) -> comment.Comment:
-    """
-    Fetch a critique by its URL.
-
-    Args:
-        url: The URL to the critique.
-
-    Returns:
-        The critique.
-    """
-
-    ids = comment.extract_ids_from_url(url)
-
-    return comment.fetch(ids["deviation_id"], ids["type_id"], ids["comment_id"])
-
-
-def to_row(block: comment.Comment, crit: comment.Comment) -> database.Row:
-    """
-    Compose a database row from block and critique attributes.
-
-    Args:
-        block: The critique block to analyze.
-        crit: The critique to analyze.
-
-    Returns:
-        A database row composed of select block and critique
-            attributes.
-    """
-
-    row = database.Row(
-        crit_posted_at = database.format_timestamp(crit.posted_at),
-        crit_edited_at = database.format_timestamp(crit.edited_at),
-        crit_author = crit.author,
-        crit_words = crit.words,
-        block_posted_at = database.format_timestamp(block.posted_at),
-        block_edited_at = database.format_timestamp(block.edited_at),
-        crit_url = comment.assemble_url(crit.belongs_to, crit.type_id, crit.id),
-        block_url = comment.assemble_url(block.belongs_to, block.type_id, block.id)
-    )
-
-    return row
-
-
-def to_incomplete_row(block: comment.Comment, url: str) -> database.Row:
-    """
-    Compose a database row from block attributes and a critique URL.
-
-    The resulting row will lack most critique metadata, including only
-    the URL.
-
-    Args:
-        block: The critique block to analyze.
-        url: The URL to a critique.
-
-    Returns:
-        A database row composed of select block attributes and a
-            critique URL.
-    """
-
-    row = database.Row(
-        block_posted_at = database.format_timestamp(block.posted_at),
-        block_edited_at = database.format_timestamp(block.edited_at),
-        crit_url = url,
-        block_url = comment.assemble_url(block.belongs_to, block.type_id, block.id)
-    )
-
-    return row
-
-
-def main(journal: str, report: pathlib.Path) -> None:
+async def main(journal: str, report: pathlib.Path) -> None:
     """
     Core of critchecker.
 
@@ -167,43 +210,44 @@ def main(journal: str, report: pathlib.Path) -> None:
     """
 
     try:
-        journal_id, journal_type = get_journal_metadata(journal)
+        journal_metadata = get_journal_metadata(journal)
     except ValueError as exception:
         exit_fatal(f"{exception}.")
 
-    data = []
+    async with network.Session() as session:
+        session.headers.update({"Accept-Encoding": "gzip"})
 
-    # We don't care about replies, only top-level comments.
-    depth = 0
+        try:
+            blocks = await fetch_blocks(*journal_metadata, session)
+        except comment.CommentError as exception:
+            exit_fatal(f"{exception}.")
 
-    try:
-        for block in comment.yield_all(journal_id, journal_type, depth):
-            block_url = comment.assemble_url(block.belongs_to, block.type_id, block.id)
+        data = initialize_database(blocks)
 
-            print(f"Block {block_url}:")
+        tasks = []
+        for row in data:
+            tasks.append(
+                asyncio.create_task(fill_row(row, session))
+            )
 
-            for url in comment.extract_comment_urls(block.body):
-                crit = fetch_critique(url)
+        progress_bar = tqdm.asyncio.tqdm.as_completed(
+            tasks,
+            desc="Fetching",
+            unit="crit"
+        )
 
-                if crit is None:
-                    # Critique URL malformed, append for humans.
-                    print(f"    ! {url}")
-                    data.append(to_incomplete_row(block, url))
-                    continue
+        for task in progress_bar:
+            try:
+                row = await task
+            except comment.CommentError as exception:
+                exit_fatal(f"{exception}.")
 
-                if crit.author != block.author:
-                    print(f"  Participant {block.author} doesn't match {crit.author}.")
-                    continue
+            if row in data:
+                continue
 
-                new_row = to_row(block, crit)
+            index = database.get_index_by_crit_url(row.crit_url, data)
 
-                print(f"    A {url}")
-                data.append(new_row)
-
-            # Cosmetic newline.
-            print()
-    except (comment.FetchingError, ValueError) as exception:
-        exit_fatal(f"{exception}.")
+            data[index] = row
 
     try:
         save_database(data, report)
@@ -216,8 +260,11 @@ def wrapper() -> None:
     Entry point for critchecker.
     """
 
+    loop = asyncio.get_event_loop()
+
     try:
-        main(**vars(read_args()))
+        loop.run_until_complete(main(**vars(read_args())))
     except KeyboardInterrupt:
-        # Gracefully abort.
-        print("\rInterrupted by user.")
+        # Gracefully abort and let the garbage collector handle the
+        # loop.
+        print("\r\nInterrupted by user.")
