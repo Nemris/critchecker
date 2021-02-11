@@ -1,8 +1,17 @@
 # Changelog
 
 ## Unreleased
+### Added
+ * Dependency on tqdm.
+ * Dependency on aiohttp.
+
 ### Changed
+ * Fetch URLs asynchronously.
  * Timestamp is now in the YYYY/MM/DD HH:MM format.
+
+### Removed
+ * Database loading and updating.
+ * Dependency on requests.
 
 ## 0.1.1 - 2021-01-24
 ### Changed

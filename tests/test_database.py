@@ -1,5 +1,6 @@
 """ Tests for critchecker.database. """
 
+import datetime
 import io
 import string
 
@@ -167,3 +168,15 @@ def test_finding_index_finds_first_row_with_same_crit_url(data):
     result = database.get_index_by_crit_url(url, data)
 
     assert data[result].crit_url == url
+
+
+@given(human_dates())
+def test_valid_timestamp_returns_datetime(timestamp):
+    """
+    Test that trying to convert a valid timestamp to a datetime always
+    returns a datetime.datetime object.
+    """
+
+    result = database.timestamp_to_datetime(timestamp)
+
+    assert isinstance(result, datetime.datetime)
