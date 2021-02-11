@@ -2,6 +2,7 @@
 
 ## Unreleased
 ### Added
+ * Basic stats on fetched critiques.
  * Dependency on tqdm.
  * Dependency on aiohttp.
 

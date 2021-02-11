@@ -180,3 +180,15 @@ def test_valid_timestamp_returns_datetime(timestamp):
     result = database.timestamp_to_datetime(timestamp)
 
     assert isinstance(result, datetime.datetime)
+
+
+@given(databases())
+def test_total_crits_equals_valid_plus_deleted(data):
+    """
+    Test that the amount of total critiques in a database equals the
+    amount of valid plus deleted ones.
+    """
+
+    result = database.measure_stats(data)
+
+    assert result[0] == (result[1] + result[2])

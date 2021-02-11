@@ -249,6 +249,19 @@ async def main(journal: str, report: pathlib.Path) -> None:
 
             data[index] = row
 
+    # Cosmetic newline.
+    print()
+
+    try:
+        total_crits, valid_crits, deleted_crits = database.measure_stats(data)
+    except ValueError as exception:
+        # An error at this point means the database is garbage.
+        exit_fatal(f"{exception}.")
+
+    print(f"Total critiques:   {total_crits:>4}")
+    print(f"Valid critiques:   {valid_crits:>4}")
+    print(f"Deleted critiques: {deleted_crits:>4}")
+
     try:
         save_database(data, report)
     except OSError as exception:
