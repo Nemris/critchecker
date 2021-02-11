@@ -162,7 +162,7 @@ def measure_stats(data: list[Row]) -> tuple[int, int, int]:
 
     Args:
         data: The database to parse.
-    
+
     Returns:
         A tuple containing the amount of total, valid and deleted
             critiques.
@@ -175,7 +175,7 @@ def measure_stats(data: list[Row]) -> tuple[int, int, int]:
         # Let's use a generator to avoid copying the whole database.
         deleted = sum((True for row in data if row.crit_words == 0))
     except AttributeError as exception:
-        raise ValueError(f"invalid database") from exception
+        raise ValueError("invalid database") from exception
 
     total = len(data)
     valid = total - deleted
