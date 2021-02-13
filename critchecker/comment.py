@@ -69,7 +69,7 @@ class Comment():  # pylint: disable=too-many-instance-attributes
                 by the DA Eclipse API.
 
         Raises:
-            ValueError: If a required key is missing from comment.
+            BadCommentError: If a required key is missing from comment.
         """
 
         # "Draft" comments have a word count ready, "writer" comments
@@ -131,8 +131,8 @@ class CommentPage():
                 returned by the DA Eclipse API.
 
         Raises:
-            ValueError: If a required key is missing from comment or
-                instantiating a Comment fails.
+            BadCommentPageError: If a required key is missing from
+                comment or instantiating a Comment fails.
         """
 
         try:
