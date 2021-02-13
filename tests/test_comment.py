@@ -171,7 +171,6 @@ def comments(draw):
         "posted": draw(text()),
         "edited": draw(text()),
         "user": {
-            "userId": draw(integers(1)),
             "username": draw(text())
         },
         "textContent": {
@@ -237,7 +236,6 @@ def test_comment_data_same_as_dict(comment_dict):
     assert result.belongs_to == comment_dict["itemId"]
     assert result.posted_at == comment_dict["posted"]
     assert result.edited_at == comment_dict["edited"]
-    assert result.author_id == comment_dict["user"]["userId"]
     assert result.author == comment_dict["user"]["username"]
     assert result.body == "\n".join([block["text"] for block in blocks])
     assert result.words == features[0]["data"]["words"]
