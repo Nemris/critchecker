@@ -230,10 +230,11 @@ def test_comment_data_same_as_dict(comment_dict):
     features = json.loads(comment_dict["textContent"]["html"]["features"])
     result = comment.Comment(comment_dict)
 
-    assert result.id == comment_dict["commentId"]
+    # The URL is assembled from three attributes, so let's just check
+    # its validity, rather than remaking it ourselves.
+    assert comment.is_url_valid(result.url)
+
     assert result.parent_id == comment_dict["parentId"]
-    assert result.type_id == comment_dict["typeId"]
-    assert result.belongs_to == comment_dict["itemId"]
     assert result.posted_at == comment_dict["posted"]
     assert result.edited_at == comment_dict["edited"]
     assert result.author == comment_dict["user"]["username"]

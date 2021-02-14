@@ -127,8 +127,6 @@ def initialize_database(blocks: list[comment.Comment]) -> list[database.Row]:
 
     data = []
     for block in blocks:
-        block_url = comment.assemble_url(block.belongs_to, block.type_id, block.id)
-
         for crit_url in comment.extract_comment_urls(block.body):
             try:
                 database.get_index_by_crit_url(crit_url, data)
@@ -142,7 +140,7 @@ def initialize_database(blocks: list[comment.Comment]) -> list[database.Row]:
                     block_posted_at = database.format_timestamp(block.posted_at),
                     block_edited_at = database.format_timestamp(block.edited_at),
                     crit_url = crit_url,
-                    block_url = block_url
+                    block_url = block.url
                 )
             )
 
