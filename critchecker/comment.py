@@ -37,25 +37,19 @@ class Comment():  # pylint: disable=too-many-instance-attributes
     Args:
         comment: The dict representation of a comment, as returned by
             the DA Eclipse API.
-        id: The comment ID.
+        url: The comment's URL.
         parent_id: The parent comment's ID, if any.
-        type_id: The parent deviation's type ID.
-        belongs_to: The parent deviation's ID.
         posted_at: The comment's timestamp.
         edited_at: The comment's edited time, if any.
-        author_id: The comment author's user ID.
         author: The comment author's username.
         body: The comment's body.
     """
 
     comment: dataclasses.InitVar[dict]
-    id: int = None  # pylint: disable=invalid-name
+    url: str = None
     parent_id: int = None
-    type_id: int = None
-    belongs_to: int = None
     posted_at: str = None
     edited_at: str = None
-    author_id: int = None
     author: str = None
     body: str = None
     words: int = None
@@ -76,13 +70,15 @@ class Comment():  # pylint: disable=too-many-instance-attributes
         # must be parsed.
 
         try:
-            self.id = comment["commentId"]
+            self.url = assemble_url(
+                comment["itemId"],
+                comment["typeId"],
+                comment["commentId"]
+            )
+
             self.parent_id = comment["parentId"]
-            self.type_id = comment["typeId"]
-            self.belongs_to = comment["itemId"]
             self.posted_at = comment["posted"]
             self.edited_at = comment["edited"]
-            self.author_id = comment["user"]["userId"]
             self.author = comment["user"]["username"]
 
             structure = comment["textContent"]["html"]
@@ -294,13 +290,13 @@ async def fetch(url: str, session: network.Session) -> Comment:
         NoSuchCommentError: If the requested comment is not found.
     """
 
-    type_id, deviation_id, comment_id = extract_ids_from_url(url)
+    type_id, deviation_id, _ = extract_ids_from_url(url)
 
     # Let exceptions bubble up.
     depth = 0
     async for commentpage in fetch_pages(deviation_id, type_id, depth, session):
         for comment in commentpage.comments:
-            if comment.id == comment_id:
+            if comment.url == url:
                 return comment
 
     # Reaching this point means no matching comment was found.

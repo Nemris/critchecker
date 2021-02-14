@@ -171,7 +171,6 @@ def comments(draw):
         "posted": draw(text()),
         "edited": draw(text()),
         "user": {
-            "userId": draw(integers(1)),
             "username": draw(text())
         },
         "textContent": {
@@ -231,13 +230,13 @@ def test_comment_data_same_as_dict(comment_dict):
     features = json.loads(comment_dict["textContent"]["html"]["features"])
     result = comment.Comment(comment_dict)
 
-    assert result.id == comment_dict["commentId"]
+    # The URL is assembled from three attributes, so let's just check
+    # its validity, rather than remaking it ourselves.
+    assert comment.is_url_valid(result.url)
+
     assert result.parent_id == comment_dict["parentId"]
-    assert result.type_id == comment_dict["typeId"]
-    assert result.belongs_to == comment_dict["itemId"]
     assert result.posted_at == comment_dict["posted"]
     assert result.edited_at == comment_dict["edited"]
-    assert result.author_id == comment_dict["user"]["userId"]
     assert result.author == comment_dict["user"]["username"]
     assert result.body == "\n".join([block["text"] for block in blocks])
     assert result.words == features[0]["data"]["words"]
