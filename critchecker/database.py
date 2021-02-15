@@ -15,6 +15,7 @@ class Row():  # pylint: disable=too-many-instance-attributes
         crit_posted_at: The critique's timestamp.
         crit_edited_at: The critique's edited timestamp, if any.
         crit_author: The critique's author.
+        deviation_artist: The author of the critiqued deviation.
         crit_words: Thw critique's length in words.
         block_posted_at: The critique block's timestamp.
         block_edited_at: The critique block's edited timestamp, if any.
@@ -27,6 +28,7 @@ class Row():  # pylint: disable=too-many-instance-attributes
     crit_posted_at: str = None
     crit_edited_at: typing.Optional[str] = None
     crit_author: str = None
+    deviation_artist: str = None
     crit_words: int = 0
     block_posted_at: str = None
     block_edited_at: typing.Optional[str] = None

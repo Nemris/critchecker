@@ -96,6 +96,7 @@ def rows(draw):
         "crit_posted_at": draw(human_dates()),
         "crit_edited_at": draw(human_dates()),
         "crit_author": draw(usernames()),
+        "deviation_artist": draw(usernames()),
         "crit_words": draw(integers()),
         "block_posted_at": draw(human_dates()),
         "block_edited_at": draw(human_dates()),
