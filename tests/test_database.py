@@ -114,7 +114,8 @@ def databases(draw):
     A database is a list of Row() entries.
     """
 
-    data = draw(lists(rows(), min_size=1))
+    # Limit the size of generated databases for performance's sake.
+    data = draw(lists(rows(), min_size=1, max_size=3))
 
     return data
 

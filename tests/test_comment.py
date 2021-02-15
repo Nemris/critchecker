@@ -109,10 +109,12 @@ def misc_urls(draw):
     contain any other string.
     """
 
+    # Limit the amount of generated URLs for performance's sake.
     urls = "\n".join(
         draw(
             lists(
-                comment_urls() | bad_urls()
+                comment_urls() | bad_urls(),
+                max_size=3
             )
         )
     )
@@ -210,10 +212,12 @@ def commentpages(draw):
     dicts.
     """
 
+    # A DA comment page can contain 50 comments max, but let's limit
+    # that here for performance.
     data = {
         "hasMore": draw(booleans()),
         "nextOffset": draw(integers(0)),
-        "thread": draw(lists(comments(), max_size=50))
+        "thread": draw(lists(comments(), max_size=3))
     }
 
     return data
