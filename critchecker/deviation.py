@@ -3,9 +3,15 @@
 import dataclasses
 import re
 
+from critchecker import network
+
 
 class DeviationError(Exception):
     """ Common base class for exceptions related to deviations. """
+
+
+class DeviationFetchingError(DeviationError):
+    """ An error occurred while fetching deviation data. """
 
 
 class BadDeviationError(DeviationError):
@@ -107,3 +113,37 @@ def typeid_of(category: str) -> int:
     }
 
     return type_ids.get(category, 0)
+
+
+async def fetch_metadata(deviation_id: int, session: network.Session) -> Deviation:
+    """
+    Asynchronously fetch a deviation's metadata.
+
+    Args:
+        deviation_id: The deviation's ID.
+        session: A session to use for requesting data.
+
+    Returns:
+        The deviation's metadata.
+
+    Raises:
+        BadDeviationError: If instantiating the Deviation fails.
+        DeviationFetchingError: If an error happens while fetching
+            deviation data.
+    """
+
+    api_url = "https://www.deviantart.com/_napi/shared_api/deviation/fetch"
+
+    # We support only art here. Curiously, the API considers journals
+    # a subset of art, possibly because they share the type ID.
+    params = {
+        "deviationid": deviation_id,
+        "type": "art"
+    }
+
+    try:
+        deviation = await network.fetch_json(api_url, session, params=params)
+    except network.FetchingError as exception:
+        raise DeviationFetchingError(exception) from exception
+
+    return Deviation(deviation)
