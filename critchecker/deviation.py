@@ -1,6 +1,48 @@
 """ Functions that handle DA deviations. """
 
+import dataclasses
 import re
+
+
+class DeviationError(Exception):
+    """ Common base class for exceptions related to deviations. """
+
+
+class BadDeviationError(DeviationError):
+    """ The API returned malformed deviation data. """
+
+
+@dataclasses.dataclass
+class Deviation():
+    """
+    A deviation.
+
+    Args:
+        deviation: The dict representation of a deviation, as returned
+            by the DA Eclipse API.
+        author: The deviation author's username.
+    """
+
+    deviation: dataclasses.InitVar[dict]
+    author: str = None
+
+    def __post_init__(self, deviation: dict) -> None:
+        """
+        Initialize the instance attributes by parsing deviation.
+
+        Args:
+            deviation: The dict representation of a deviation, as
+                returned by the DA Eclipse API.
+
+        Raises:
+            BadDeviationError: If a required key is missing from
+                deviation.
+        """
+
+        try:
+            self.author = deviation["author"]["username"]
+        except KeyError as exception:
+            raise BadDeviationError("bad deviation data") from exception
 
 
 def extract_id(url: str) -> str:
