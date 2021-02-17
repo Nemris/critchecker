@@ -12,7 +12,7 @@ To run `critchecker`, you'll need [bs4][1], [tqdm][2] and [aiohttp][3]].
 Install them with:
 
 ```bash
-python3 -m pip install bs4 aiohttp
+python3 -m pip install bs4 tqdm aiohttp
 ```
 
 Installing the dependencies manually is not required if you install
@@ -62,7 +62,7 @@ The default location for the CSV file will be either `$HOME/critmas.csv` or
 `C:\Users\<username>\critmas.csv`, depending on your OS of choice.
 
 Note that **the target file will be overwritten** if already present when
-`critchecker` is ran.
+`critchecker` is run.
 
 ## Building
 
