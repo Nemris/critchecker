@@ -2,6 +2,7 @@
 
 ## Unreleased
 ### Added
+ * Deviation artists to database.
  * Basic stats on fetched critiques.
  * Dependency on tqdm.
  * Dependency on aiohttp.

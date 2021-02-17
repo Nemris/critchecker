@@ -147,27 +147,114 @@ def initialize_database(blocks: list[comment.Comment]) -> list[database.Row]:
     return data
 
 
-async def fill_row(row: database.Row, session: network.Session) -> database.Row:
+def get_unique_deviation_ids(data: list[database.Row]) -> set[int]:
+    """
+    Obtain the unique deviation IDs stored in a critique database.
+
+    Args:
+        data: The critique database.
+
+    Returns:
+        The unique deviation IDs in the database.
+
+    Raises:
+        ValueError: If a critique URL is malformed.
+    """
+
+    return set((comment.extract_ids_from_url(row.crit_url)[1] for row in data))
+
+
+async def map_deviation_to_artist(deviation_id: int, session: network.Session) -> dict[int, str]:
+    """
+    Asynchronously fetch the artist matching a deviation ID.
+
+    Args:
+        deviation_id: A deviation ID whose matching artist to fetch.
+        session: A session to use for requesting data.
+
+    Returns:
+        A deviation artist mapped to a deviation ID.
+
+    Raises:
+        deviation.DeviationError: If an error occurred while fetxhing a
+            deviation's metadata.
+    """
+    try:
+        metadata = await deviation.fetch_metadata(deviation_id, session)
+    except deviation.BadDeviationError:
+        # The deviation is likely unavailable.
+        return {deviation_id: ""}
+
+    return {deviation_id: metadata.author}
+
+
+async def fetch_artists(data: list[database.Row], session: network.Session) -> dict[int, str]:
+    """
+    Fetch the artist for every unique deviation in a critique database.
+
+    Args:
+        data: The critique database.
+        session: A session to use for requesting data.
+
+    Returns:
+        A mapping between unique deviation IDs and artists.
+
+    Raises:
+        ValueError: If a critique URL is malformed.
+        deviation.DeviationError: If an error occurred while fetching
+            a deviation's metadata.
+    """
+
+    mapping = dict.fromkeys(get_unique_deviation_ids(data))
+
+    tasks = []
+    for deviation_id in mapping:
+        tasks.append(
+            asyncio.create_task(
+                map_deviation_to_artist(deviation_id, session)
+            )
+        )
+
+    progress_bar = tqdm.asyncio.tqdm.as_completed(
+        tasks,
+        desc="Fetching artists",
+        unit="artist"
+    )
+
+    for task in progress_bar:
+        mapping.update(await task)
+
+    return mapping
+
+
+async def fill_row(
+    row: database.Row,
+    mapping: dict[int, str],
+    session: network.Session
+) -> database.Row:
     """
     Fetch the critique data belonging to a database row and fill it.
 
     Args:
-        data: An initialized database row.
+        row: An initialized database row.
+        mapping: A mapping between unique deviation IDs and artists.
         session: A session to use for requesting data.
 
     Returns:
-        The database row with the missing fields filled by the critique
-            data.
+        The database row with the missing fields filled.
 
     Raises:
         comment.CommentError: If an error occurred while fetching the
             critique.
     """
 
+    # Always fill the deviation artist beforehand.
+    row.deviation_artist = mapping[comment.extract_ids_from_url(row.crit_url)[1]]
+
     try:
         critique = await comment.fetch(row.crit_url, session)
     except comment.NoSuchCommentError:
-        # Probably a hidden critique - return the unchanged row.
+        # Probably a hidden critique - skip filling critique metadata.
         return row
 
     row.crit_posted_at = database.format_timestamp(critique.posted_at)
@@ -176,6 +263,56 @@ async def fill_row(row: database.Row, session: network.Session) -> database.Row:
     row.crit_words = critique.words
 
     return row
+
+
+async def fill_database(
+    data: list[database.Row],
+    mapping: dict[int, str],
+    session: network.Session
+) -> list[database.Row]:
+    """
+    Asynchronously fetch critiques and fill the critique database.
+
+    Args:
+        data: The critique database.
+        mapping: A mapping between unique deviation IDs and artists.
+        session: A session to use for requesting data.
+
+    Returns:
+        The filled critique database.
+
+    Raises:
+        comment.CommentError: If an error occurred while fetching a
+            critique.
+    """
+
+    tasks = []
+    for row in data:
+        tasks.append(
+            asyncio.create_task(
+                fill_row(row, mapping, session)
+            )
+        )
+
+    progress_bar = tqdm.asyncio.tqdm.as_completed(
+        tasks,
+        desc="Fetching critiques",
+        unit="crit"
+    )
+
+    for task in progress_bar:
+        row = await task
+
+        if row in data:
+            continue
+
+        # Not possible to get exceptions here, so let's not look for
+        # one.
+        index = database.get_index_by_crit_url(row.crit_url, data)
+
+        data[index] = row
+
+    return data
 
 
 def save_database(data: list[database.Row], path: pathlib.Path) -> None:
@@ -202,9 +339,7 @@ async def main(journal: str, report: pathlib.Path) -> None:
 
     Args:
         journal: The URL of the Critmas launch journal.
-        database: The path to a CSV report created by critchecker.
-        recheck: Whether to recheck all stored critiques and update the
-            corresponding report entries if needed.
+        report: The path to a CSV report created by critchecker.
     """
 
     try:
@@ -222,30 +357,15 @@ async def main(journal: str, report: pathlib.Path) -> None:
 
         data = initialize_database(blocks)
 
-        tasks = []
-        for row in data:
-            tasks.append(
-                asyncio.create_task(fill_row(row, session))
-            )
+        try:
+            mapping = await fetch_artists(data, session)
+        except (ValueError, deviation.DeviationError) as exception:
+            exit_fatal(f"{exception}.")
 
-        progress_bar = tqdm.asyncio.tqdm.as_completed(
-            tasks,
-            desc="Fetching",
-            unit="crit"
-        )
-
-        for task in progress_bar:
-            try:
-                row = await task
-            except comment.CommentError as exception:
-                exit_fatal(f"{exception}.")
-
-            if row in data:
-                continue
-
-            index = database.get_index_by_crit_url(row.crit_url, data)
-
-            data[index] = row
+        try:
+            data = await fill_database(data, mapping, session)
+        except comment.CommentError as exception:
+            exit_fatal(f"{exception}.")
 
     # Cosmetic newline.
     print()
