@@ -147,6 +147,74 @@ def initialize_database(blocks: list[comment.Comment]) -> list[database.Row]:
     return data
 
 
+def get_unique_deviation_ids(data: list[database.Row]) -> set[int]:
+    """
+    Obtain the unique deviation IDs stored in a critique database.
+
+    Args:
+        data: The critique database.
+
+    Returns:
+        The unique deviation IDs in the database.
+    """
+
+    return set((comment.extract_ids_from_url(row.crit_url)[1] for row in data))
+
+
+async def map_deviation_to_artist(deviation_id: int, session: network.Session) -> dict[int, str]:
+    """
+    Asynchronously fetch the artist matching a deviation ID.
+
+    Args:
+        deviation_id: A deviation ID whose matching artist to fetch.
+        session: A session to use for requesting data.
+
+    Returns:
+        A deviation artist mapped to a deviation ID.
+    """
+    try:
+        metadata = await deviation.fetch_metadata(deviation_id, session)
+    except deviation.BadDeviationError:
+        # The deviation is likely unavailable.
+        return {deviation_id: ""}
+
+    return {deviation_id: metadata.author}
+
+
+async def fetch_artists(data: list[database.Row], session: network.Session) -> dict[int, str]:
+    """
+    Fetch the artist for every unique deviation in a critique database.
+
+    Args:
+        data: The critique database.
+        session: A session to use for requesting data.
+
+    Returns:
+        A mapping of unique deviation IDs to the corresponding artists.
+    """
+
+    mapping = dict.fromkeys(get_unique_deviation_ids(data))
+
+    tasks = []
+    for deviation_id in mapping:
+        tasks.append(
+            asyncio.create_task(
+                map_deviation_to_artist(deviation_id, session)
+            )
+        )
+
+    progress_bar = tqdm.asyncio.tqdm.as_completed(
+        tasks,
+        desc="Fetching artists",
+        unit="artist"
+    )
+
+    for task in progress_bar:
+        mapping.update(await task)
+
+    return mapping
+
+
 async def fill_row(row: database.Row, session: network.Session) -> database.Row:
     """
     Fetch the critique data belonging to a database row and fill it.
