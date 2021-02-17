@@ -197,7 +197,7 @@ async def fetch_artists(data: list[database.Row], session: network.Session) -> d
         session: A session to use for requesting data.
 
     Returns:
-        A mapping of unique deviation IDs to the corresponding artists.
+        A mapping between unique deviation IDs and artists.
 
     Raises:
         ValueError: If a critique URL is malformed.
@@ -339,9 +339,7 @@ async def main(journal: str, report: pathlib.Path) -> None:
 
     Args:
         journal: The URL of the Critmas launch journal.
-        database: The path to a CSV report created by critchecker.
-        recheck: Whether to recheck all stored critiques and update the
-            corresponding report entries if needed.
+        report: The path to a CSV report created by critchecker.
     """
 
     try:
