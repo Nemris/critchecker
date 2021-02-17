@@ -339,7 +339,7 @@ async def main(journal: str, report: pathlib.Path) -> None:
 
     Args:
         journal: The URL of the Critmas launch journal.
-        report: The path to a CSV report created by critchecker.
+        report: The path and filename to save the CSV report as.
     """
 
     try:
