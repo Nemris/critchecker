@@ -156,6 +156,9 @@ def get_unique_deviation_ids(data: list[database.Row]) -> set[int]:
 
     Returns:
         The unique deviation IDs in the database.
+
+    Raises:
+        ValueError: If a critique URL is malformed.
     """
 
     return set((comment.extract_ids_from_url(row.crit_url)[1] for row in data))
@@ -171,6 +174,10 @@ async def map_deviation_to_artist(deviation_id: int, session: network.Session) -
 
     Returns:
         A deviation artist mapped to a deviation ID.
+
+    Raises:
+        deviation.DeviationError: If an error occurred while fetxhing a
+            deviation's metadata.
     """
     try:
         metadata = await deviation.fetch_metadata(deviation_id, session)
@@ -191,6 +198,11 @@ async def fetch_artists(data: list[database.Row], session: network.Session) -> d
 
     Returns:
         A mapping of unique deviation IDs to the corresponding artists.
+
+    Raises:
+        ValueError: If a critique URL is malformed.
+        deviation.DeviationError: If an error occurred while fetching
+            a deviation's metadata.
     """
 
     mapping = dict.fromkeys(get_unique_deviation_ids(data))
