@@ -4,6 +4,7 @@ import argparse
 import asyncio
 import pathlib
 import sys
+import warnings
 
 import tqdm.asyncio
 
@@ -390,6 +391,9 @@ def wrapper() -> None:
     """
     Entry point for critchecker.
     """
+
+    # Mute bs4 since it tends to be overzealous.
+    warnings.filterwarnings("ignore", category=UserWarning, module="bs4")
 
     loop = asyncio.get_event_loop()
 
