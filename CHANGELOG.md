@@ -10,6 +10,7 @@
 ### Changed
  * Fetch URLs asynchronously.
  * Timestamp is now in the YYYY/MM/DD HH:MM format.
+ * Bump all dependencies to latest.
 
 ### Removed
  * Database loading and updating.
