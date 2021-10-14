@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.0.0 - 2021-10-14
 ### Added
  * Deviation artists to database.
  * Basic stats on fetched critiques.
