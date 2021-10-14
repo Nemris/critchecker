@@ -8,11 +8,11 @@ The blocks are sorted by newest, and the critique URL order is preserved.
 
 ## Requirements
 
-To run `critchecker`, you'll need [bs4][1], [tqdm][2] and [aiohttp][3]].
+To run, `critchecker` needs [beautifulsoup4][1], [tqdm][2] and [aiohttp][3]].
 Install them with:
 
 ```bash
-python3 -m pip install bs4 tqdm aiohttp
+python3 -m pip install beautifulsoup4 tqdm aiohttp
 ```
 
 Installing the dependencies manually is not required if you install
@@ -172,7 +172,7 @@ This program is licensed under the terms of the [MIT][10] license.
 Check [LICENSE.txt][11] for further info.
 
 
-[1]:https://www.crummy.com/software/BeautifulSoup/bs4/doc/
+[1]:https://www.crummy.com/software/BeautifulSoup/
 [2]:https://tqdm.github.io/
 [3]:https://docs.aiohttp.org/
 [4]:https://python-poetry.org/
