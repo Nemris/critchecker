@@ -1,17 +1,32 @@
 """ Functions and dataclasses that handle DA comments. """
 
-import collections
 import dataclasses
 import json
 import re
-import typing
 
 import bs4
-import requests
+
+from critchecker import network
 
 
-class FetchingError(Exception):
-    """ A network or HTTP error occurred while fetching data. """
+class CommentError(Exception):
+    """ Common base class for exceptions related to comments. """
+
+
+class NoSuchCommentError(CommentError):
+    """ The requested comment does not exist. """
+
+
+class CommentPageFetchingError(CommentError):
+    """ An error occurred while fetching comment page data. """
+
+
+class BadCommentError(CommentError):
+    """ The API returned malformed comment data. """
+
+
+class BadCommentPageError(CommentError):
+    """ The API returned malformed comment page data. """
 
 
 @dataclasses.dataclass
@@ -22,25 +37,19 @@ class Comment():  # pylint: disable=too-many-instance-attributes
     Args:
         comment: The dict representation of a comment, as returned by
             the DA Eclipse API.
-        id: The comment ID.
+        url: The comment's URL.
         parent_id: The parent comment's ID, if any.
-        type_id: The parent deviation's type ID.
-        belongs_to: The parent deviation's ID.
         posted_at: The comment's timestamp.
         edited_at: The comment's edited time, if any.
-        author_id: The comment author's user ID.
         author: The comment author's username.
         body: The comment's body.
     """
 
     comment: dataclasses.InitVar[dict]
-    id: int = None  # pylint: disable=invalid-name
+    url: str = None
     parent_id: int = None
-    type_id: int = None
-    belongs_to: int = None
     posted_at: str = None
     edited_at: str = None
-    author_id: int = None
     author: str = None
     body: str = None
     words: int = None
@@ -54,20 +63,22 @@ class Comment():  # pylint: disable=too-many-instance-attributes
                 by the DA Eclipse API.
 
         Raises:
-            ValueError: If a required key is missing from comment.
+            BadCommentError: If a required key is missing from comment.
         """
 
         # "Draft" comments have a word count ready, "writer" comments
         # must be parsed.
 
         try:
-            self.id = comment["commentId"]
+            self.url = assemble_url(
+                comment["itemId"],
+                comment["typeId"],
+                comment["commentId"]
+            )
+
             self.parent_id = comment["parentId"]
-            self.type_id = comment["typeId"]
-            self.belongs_to = comment["itemId"]
             self.posted_at = comment["posted"]
             self.edited_at = comment["edited"]
-            self.author_id = comment["user"]["userId"]
             self.author = comment["user"]["username"]
 
             structure = comment["textContent"]["html"]
@@ -86,7 +97,7 @@ class Comment():  # pylint: disable=too-many-instance-attributes
                     if feature["type"] == "WORD_COUNT_FEATURE":
                         self.words = feature["data"]["words"]
         except KeyError as exception:
-            raise ValueError("malformed comment data") from exception
+            raise BadCommentError("malformed comment data") from exception
 
 
 @dataclasses.dataclass
@@ -116,16 +127,16 @@ class CommentPage():
                 returned by the DA Eclipse API.
 
         Raises:
-            ValueError: If a required key is missing from comment or
-                instantiating a Comment fails.
+            BadCommentPageError: If a required key is missing from
+                comment or instantiating a Comment fails.
         """
 
         try:
             self.has_more = commentpage["hasMore"]
             self.next_offset = commentpage["nextOffset"]
             self.comments = [Comment(comment) for comment in commentpage["thread"]]
-        except (KeyError, ValueError) as exception:
-            raise ValueError("malformed comment page data") from exception
+        except (KeyError, BadCommentError) as exception:
+            raise BadCommentPageError("malformed comment page data") from exception
 
 
 def assemble_url(deviation_id: int, type_id: int, comment_id: int) -> str:
@@ -152,7 +163,7 @@ def assemble_url(deviation_id: int, type_id: int, comment_id: int) -> str:
     return "/".join([base_url, relative_url])
 
 
-def extract_ids_from_url(url: str) -> dict[int, int, int]:
+def extract_ids_from_url(url: str) -> tuple[int, int, int]:
     """
     Obtain the IDs from a comment URL.
 
@@ -160,133 +171,136 @@ def extract_ids_from_url(url: str) -> dict[int, int, int]:
         url: The URL to a comment.
 
     Returns:
-        The extracted type ID, deviation ID and comment ID as ints.
+        A tuple of the extracted type ID, deviation ID and comment ID
+            as ints, in order.
 
     Raises:
         ValueError: If the comment URL is invalid.
     """
 
-    split_url = url.split("/")
-
     try:
-        return {
-            "type_id": int(split_url[-3]),
-            "deviation_id": int(split_url[-2]),
-            "comment_id": int(split_url[-1])
-        }
+        return tuple(int(num) for num in url.split("/")[-3:])
     except (IndexError, ValueError) as exception:
         raise ValueError(f"'{url}': invalid comment URL") from exception
 
 
-def fetch(deviation_id: int, type_id: int, comment_id: int) -> typing.Optional[Comment]:
+async def fetch_page(
+    deviation_id: int,
+    type_id: int,
+    depth: int,
+    offset: int,
+    session: network.Session
+) -> CommentPage:
     """
-    Fetch a single comment to a deviation.
+    Asynchronously fetch a page of comments to a deviation.
+
+    The comments are ordered from newest to oldest, and a page's
+    maximum size is 50 comments.
 
     Args:
         deviation_id: The parent deviation's ID.
         type_id: The parent deviation's type ID.
-        comment_id: The comment ID.
-
-    Returns:
-        A single comment or None.
-
-    Raises:
-        FetchingError: If an error occurs while fetching the comment
-            data.
-        ValueError: If DA returns invalid comment data.
-    """
-
-    # TODO: Once PEP-604 is implemented, use the new union syntax.
-
-    # pylint: disable=unsubscriptable-object
-    # See https://github.com/PyCQA/pylint/issues/3882.
-
-    depth = 0
-    for comment in yield_all(deviation_id, type_id, depth):
-        if comment.id == comment_id:
-            return comment
-
-    return None
-
-
-def fetch_page(deviation_id: int, type_id: int, depth: int, offset: int) -> CommentPage:
-    """
-    Fetch a page of comments to a deviation, newest comments first.
-
-    Args:
-        deviation_id: The parent deviation's ID.
-        type_id: The parent deviation's type ID.
-        depth: The amount of replies to a comment. A depth of zero
-            returns only the topmost comment.
-        offset: The comment offset from where to fetch comments in
-            blocks of 10 per page.
+        depth: The amount of allowed replies to a comment. A depth of
+            zero returns only the topmost comments.
+        offset: The starting offset of the comment page.
+        session: A session to use for requesting data.
 
     Returns:
         A page of comments.
 
     Raises:
-        FetchingError: If an error occurs while fetching the comment
-            page data.
-        ValueError: If DA returns invalid comment page data.
+        BadCommentPageError: If instantiating the CommentPage fails.
+        CommentPageFetchingError: If an error occurs while fetching
+            comment page data.
     """
 
     api_url = "https://www.deviantart.com/_napi/shared_api/comments/thread"
-
-    # Assume we're most interested in newest comments.
     params = {
-        "typeid": type_id,
         "itemid": deviation_id,
+        "typeid": type_id,
+        "order": "newest",
         "maxdepth": depth,
         "offset": offset,
-        "order": "newest",
         "limit": 50
     }
 
     try:
-        response = requests.get(api_url, params=params, timeout=5)
-        response.raise_for_status()
-    except requests.exceptions.HTTPError as exception:
-        raise FetchingError(f"HTTP error: '{exception}'") from exception
-    except requests.exceptions.ConnectionError as exception:
-        raise FetchingError(f"connection error: '{exception}'") from exception
-    except requests.exceptions.Timeout as exception:
-        raise FetchingError(f"connection timed out: '{exception}'") from exception
-    except requests.exceptions.RequestException as exception:
-        raise FetchingError(f"unknown error: '{exception}'") from exception
+        commentpage = await network.fetch_json(api_url, session, params=params)
+    except network.FetchingError as exception:
+        raise CommentPageFetchingError(exception) from exception
 
-    return CommentPage(response.json())
+    return CommentPage(commentpage)
 
 
-def yield_all(deviation_id: int, type_id: int, depth: int) -> collections.abc.Iterator[Comment]:
+async def fetch_pages(
+    deviation_id: int,
+    type_id: int,
+    depth: int,
+    session: network.Session
+) -> CommentPage:
     """
-    Fetch all the comments to a deviation and yield them one by one.
+    Asynchronously fetch all the pages of comments to a deviation.
+
+    Unfortunately, fetching a comment page depends on knowing the next
+    offset, so there's currently no way to fetch more pages in
+    parallel.
 
     Args:
         deviation_id: The parent deviation's ID.
         type_id: The parent deviation's type ID.
-        depth: The amount of replies to a comment. A depth of zero
-            returns only the topmost comment.
+        depth: The amount of allowed replies to a comment. A depth of
+            zero returns only the topmost comments.
+        session: A session to use for requesting data.
 
     Yields:
-        The next comment.
+        The next comment page.
 
     Raises:
-        FetchingError: If an error occurs while fetching the comment
-            page data.
-        ValueError: If DA returns invalid comment page data.
+        BadCommentPageError: If instantiating the CommentPage fails.
+        CommentPageFetchingError: If an error occurs while fetching
+            comment page data.
     """
 
     offset = 0
-
     while True:
-        commentpage = fetch_page(deviation_id, type_id, depth, offset)
+        # Let exceptions bubble up.
+        commentpage = await fetch_page(deviation_id, type_id, depth, offset, session)
 
-        yield from commentpage.comments
+        yield commentpage
 
         if not commentpage.has_more:
             break
 
         offset = commentpage.next_offset
+
+
+async def fetch(url: str, session: network.Session) -> Comment:
+    """
+    Asynchronously fetch a single comment to a deviation.
+
+    Args:
+        url: The URL to a comment.
+        session: A session to use for requesting data.
+
+    Returns:
+        A single comment.
+
+    Raises:
+        BadCommentPageError: If instantiating the CommentPage fails.
+        NoSuchCommentError: If the requested comment is not found.
+    """
+
+    type_id, deviation_id, _ = extract_ids_from_url(url)
+
+    # Let exceptions bubble up.
+    depth = 0
+    async for commentpage in fetch_pages(deviation_id, type_id, depth, session):
+        for comment in commentpage.comments:
+            if comment.url == url:
+                return comment
+
+    # Reaching this point means no matching comment was found.
+    raise NoSuchCommentError(f"'{url}': comment not found")
 
 
 def is_url_valid(url: str) -> bool:
