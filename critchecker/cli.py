@@ -70,7 +70,7 @@ def get_journal_metadata(journal: str) -> tuple[int, int]:
     journal_id = deviation.extract_id(journal)
     journal_type = deviation.typeid_of(deviation.extract_category(journal))
 
-    return (journal_id, journal_type)
+    return (int(journal_id), int(journal_type))
 
 
 async def fetch_blocks(
@@ -146,6 +146,27 @@ def initialize_database(blocks: list[comment.Comment]) -> list[database.Row]:
             )
 
     return data
+
+
+def filter_database(data: list[database.Row], deviation_id: int) -> list[database.Row]:
+    """
+    Remove the rows with critiques made to a specific deviation.
+
+    Args:
+        data: The critique database.
+        deviation_id: A deviation ID for which to ignore critiques.
+
+    Returns:
+        The filtered critique database.
+    """
+
+    filtered_data = []
+    for row in data:
+        critiqued_deviation = comment.extract_ids_from_url(row.crit_url)[1]
+        if critiqued_deviation != deviation_id:
+            filtered_data.append(row)
+
+    return filtered_data
 
 
 def get_unique_deviation_ids(data: list[database.Row]) -> set[int]:
@@ -357,6 +378,7 @@ async def main(journal: str, report: pathlib.Path) -> None:
             exit_fatal(f"{exception}.")
 
         data = initialize_database(blocks)
+        data = filter_database(data, journal_metadata[0])
 
         try:
             mapping = await fetch_artists(data, session)

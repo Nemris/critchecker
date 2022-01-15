@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.1 - 2022-01-15
+### Fixed
+ * Exclude comments to the critique journal from the database.
+
 ## 1.0.0 - 2021-10-14
 ### Added
  * Deviation artists to database.
