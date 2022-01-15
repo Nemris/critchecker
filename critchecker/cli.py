@@ -70,7 +70,7 @@ def get_journal_metadata(journal: str) -> tuple[int, int]:
     journal_id = deviation.extract_id(journal)
     journal_type = deviation.typeid_of(deviation.extract_category(journal))
 
-    return (journal_id, journal_type)
+    return (int(journal_id), int(journal_type))
 
 
 async def fetch_blocks(
