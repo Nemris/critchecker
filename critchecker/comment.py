@@ -184,7 +184,7 @@ def extract_ids_from_url(url: str) -> tuple[int, int, int]:
         raise ValueError(f"'{url}': invalid comment URL") from exception
 
 
-async def fetch_page(
+async def fetch_page(  # pylint: disable=too-many-arguments
     deviation_id: int,
     type_id: int,
     depth: int,
