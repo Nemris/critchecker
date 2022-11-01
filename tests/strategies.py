@@ -365,3 +365,41 @@ def databases(draw):
     database = draw(lists(database_rows(), min_size=1, max_size=2))
 
     return database
+
+
+@composite
+def markups_with_csrf_token(draw):
+    """
+    Strategy to generate HTML markup containing CSRF tokens.
+    """
+
+    charset = string.ascii_letters + string.digits + "-."
+
+    token = "".join(
+        [
+            draw(
+                text(
+                    alphabet=" \t",
+                    min_size=1
+                )
+            ),
+            "window.__CSRF_TOKEN__ = '",
+            draw(
+                text(
+                    alphabet=charset,
+                    min_size=1
+                )
+            ),
+            "';"
+        ]
+    )
+
+    markup = "\n".join(
+        [
+            "<script>",
+            token,
+            "</script>"
+        ]
+    )
+
+    return markup

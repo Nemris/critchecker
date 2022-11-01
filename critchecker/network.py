@@ -2,8 +2,10 @@
 
 import asyncio
 import json
+import re
 
 import aiohttp
+import bs4
 
 
 class FetchingError(Exception):
@@ -54,6 +56,51 @@ async def fetch(url: str, session: Session, **kwargs: dict) -> dict:
         raise FetchingError(exception) from exception
     except asyncio.TimeoutError as exception:
         raise ConnectionTimedOutError(exception) from exception
+
+
+def extract_csrf_token(markup: str) -> str:
+    """
+    Find and extract a CSRF token from HTML data.
+
+    Args:
+        markup: The HTML data to inspect.
+
+    Returns:
+        The CSRF token.
+
+    Raises:
+        ValueError: If no token is found.
+    """
+
+    pattern = re.compile(r"\s+window\.__CSRF_TOKEN__ = '(.+)';")
+
+    soup = bs4.BeautifulSoup(markup, features="html.parser")
+    tag = soup.find("script", string=pattern)
+
+    try:
+        return re.search(pattern, tag.string).group(1)
+    except AttributeError as exception:
+        raise ValueError("no CSRF token found") from exception
+
+
+async def fetch_csrf_token(session: Session) -> str:
+    """
+    Asynchronously fetch and return the CSRF token for a session.
+
+    Args:
+        session: A session to use for requesting data.
+
+    Returns:
+        A CSRF token usable by the current session.
+
+    Raises:
+        ConnectionTimedOutError: If the connection times out.
+        FetchingError: If a generic network error occurs.
+    """
+
+    url = "https://www.deviantart.com"
+
+    return extract_csrf_token(await fetch(url, session))
 
 
 async def fetch_json(url: str, session: Session, **kwargs: dict) -> dict:
