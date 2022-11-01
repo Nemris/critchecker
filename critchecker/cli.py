@@ -76,6 +76,7 @@ def get_journal_metadata(journal: str) -> tuple[int, int]:
 async def fetch_blocks(
     journal_id: int,
     journal_type: int,
+    csrf_token: str,
     session: network.Session
 ) -> list[comment.Comment]:
     """
@@ -86,6 +87,7 @@ async def fetch_blocks(
     Args:
         journal_id: The launch journal's ID.
         journal_type: The launch journal's type ID.
+        csrf_token: DeviantArt-issued CSRF token valid for the session.
         session: A session to use for requesting data.
 
     Returns:
@@ -101,7 +103,7 @@ async def fetch_blocks(
     blocks = []
     progress_bar = tqdm.asyncio.tqdm(
         comment.fetch_pages(
-            journal_id, journal_type, depth, session
+            journal_id, journal_type, depth, csrf_token, session
         ),
         desc="Analyzing comment pages",
         unit="page"
@@ -186,12 +188,17 @@ def get_unique_deviation_ids(data: list[database.Row]) -> set[int]:
     return set((comment.extract_ids_from_url(row.crit_url)[1] for row in data))
 
 
-async def map_deviation_to_artist(deviation_id: int, session: network.Session) -> dict[int, str]:
+async def map_deviation_to_artist(
+    deviation_id: int,
+    csrf_token: str,
+    session: network.Session
+) -> dict[int, str]:
     """
     Asynchronously fetch the artist matching a deviation ID.
 
     Args:
         deviation_id: A deviation ID whose matching artist to fetch.
+        csrf_token: DeviantArt-issued CSRF token valid for the session.
         session: A session to use for requesting data.
 
     Returns:
@@ -202,7 +209,7 @@ async def map_deviation_to_artist(deviation_id: int, session: network.Session) -
             deviation's metadata.
     """
     try:
-        metadata = await deviation.fetch_metadata(deviation_id, session)
+        metadata = await deviation.fetch_metadata(deviation_id, csrf_token, session)
     except deviation.BadDeviationError:
         # The deviation is likely unavailable.
         return {deviation_id: ""}
@@ -210,12 +217,17 @@ async def map_deviation_to_artist(deviation_id: int, session: network.Session) -
     return {deviation_id: metadata.author}
 
 
-async def fetch_artists(data: list[database.Row], session: network.Session) -> dict[int, str]:
+async def fetch_artists(
+    data: list[database.Row],
+    csrf_token: str,
+    session: network.Session
+) -> dict[int, str]:
     """
     Fetch the artist for every unique deviation in a critique database.
 
     Args:
         data: The critique database.
+        csrf_token: DeviantArt-issued CSRF token valid for the session.
         session: A session to use for requesting data.
 
     Returns:
@@ -233,7 +245,7 @@ async def fetch_artists(data: list[database.Row], session: network.Session) -> d
     for deviation_id in mapping:
         tasks.append(
             asyncio.create_task(
-                map_deviation_to_artist(deviation_id, session)
+                map_deviation_to_artist(deviation_id, csrf_token, session)
             )
         )
 
@@ -252,6 +264,7 @@ async def fetch_artists(data: list[database.Row], session: network.Session) -> d
 async def fill_row(
     row: database.Row,
     mapping: dict[int, str],
+    csrf_token: str,
     session: network.Session
 ) -> database.Row:
     """
@@ -260,6 +273,7 @@ async def fill_row(
     Args:
         row: An initialized database row.
         mapping: A mapping between unique deviation IDs and artists.
+        csrf_token: DeviantArt-issued CSRF token valid for the session.
         session: A session to use for requesting data.
 
     Returns:
@@ -274,7 +288,7 @@ async def fill_row(
     row.deviation_artist = mapping[comment.extract_ids_from_url(row.crit_url)[1]]
 
     try:
-        critique = await comment.fetch(row.crit_url, session)
+        critique = await comment.fetch(row.crit_url, csrf_token, session)
     except comment.NoSuchCommentError:
         # Probably a hidden critique - skip filling critique metadata.
         return row
@@ -290,6 +304,7 @@ async def fill_row(
 async def fill_database(
     data: list[database.Row],
     mapping: dict[int, str],
+    csrf_token: str,
     session: network.Session
 ) -> list[database.Row]:
     """
@@ -298,6 +313,7 @@ async def fill_database(
     Args:
         data: The critique database.
         mapping: A mapping between unique deviation IDs and artists.
+        csrf_token: DeviantArt-issued CSRF token valid for the session.
         session: A session to use for requesting data.
 
     Returns:
@@ -312,7 +328,7 @@ async def fill_database(
     for row in data:
         tasks.append(
             asyncio.create_task(
-                fill_row(row, mapping, session)
+                fill_row(row, mapping, csrf_token, session)
             )
         )
 
@@ -372,8 +388,10 @@ async def main(journal: str, report: pathlib.Path) -> None:
     async with network.Session() as session:
         session.headers.update({"Accept-Encoding": "gzip"})
 
+        csrf_token = await network.fetch_csrf_token(session)
+
         try:
-            blocks = await fetch_blocks(*journal_metadata, session)
+            blocks = await fetch_blocks(*journal_metadata, csrf_token, session)
         except comment.CommentError as exception:
             exit_fatal(f"{exception}.")
 
@@ -381,12 +399,12 @@ async def main(journal: str, report: pathlib.Path) -> None:
         data = filter_database(data, journal_metadata[0])
 
         try:
-            mapping = await fetch_artists(data, session)
+            mapping = await fetch_artists(data, csrf_token, session)
         except (ValueError, deviation.DeviationError) as exception:
             exit_fatal(f"{exception}.")
 
         try:
-            data = await fill_database(data, mapping, session)
+            data = await fill_database(data, mapping, csrf_token, session)
         except comment.CommentError as exception:
             exit_fatal(f"{exception}.")
 

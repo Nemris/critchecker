@@ -115,13 +115,18 @@ def typeid_of(category: str) -> int:
     return type_ids.get(category, 0)
 
 
-async def fetch_metadata(deviation_id: int, session: network.Session) -> Deviation:
+async def fetch_metadata(
+    deviation_id: int,
+    csrf_token: str,
+    session: network.Session
+) -> Deviation:
     """
     Asynchronously fetch a deviation's metadata.
 
     Args:
         deviation_id: The deviation's ID.
         session: A session to use for requesting data.
+        csrf_token: DeviantArt-issued CSRF token valid for the session.
 
     Returns:
         The deviation's metadata.
@@ -138,7 +143,8 @@ async def fetch_metadata(deviation_id: int, session: network.Session) -> Deviati
     # a subset of art, possibly because they share the type ID.
     params = {
         "deviationid": deviation_id,
-        "type": "art"
+        "type": "art",
+        "csrf_token": csrf_token
     }
 
     try:

@@ -189,6 +189,7 @@ async def fetch_page(
     type_id: int,
     depth: int,
     offset: int,
+    csrf_token: str,
     session: network.Session
 ) -> CommentPage:
     """
@@ -203,6 +204,7 @@ async def fetch_page(
         depth: The amount of allowed replies to a comment. A depth of
             zero returns only the topmost comments.
         offset: The starting offset of the comment page.
+        csrf_token: DeviantArt-issued CSRF token valid for the session.
         session: A session to use for requesting data.
 
     Returns:
@@ -221,6 +223,7 @@ async def fetch_page(
         "order": "newest",
         "maxdepth": depth,
         "offset": offset,
+        "csrf_token": csrf_token,
         "limit": 50
     }
 
@@ -236,6 +239,7 @@ async def fetch_pages(
     deviation_id: int,
     type_id: int,
     depth: int,
+    csrf_token: str,
     session: network.Session
 ) -> CommentPage:
     """
@@ -250,6 +254,7 @@ async def fetch_pages(
         type_id: The parent deviation's type ID.
         depth: The amount of allowed replies to a comment. A depth of
             zero returns only the topmost comments.
+        csrf_token: DeviantArt-issued CSRF token valid for the session.
         session: A session to use for requesting data.
 
     Yields:
@@ -264,7 +269,7 @@ async def fetch_pages(
     offset = 0
     while True:
         # Let exceptions bubble up.
-        commentpage = await fetch_page(deviation_id, type_id, depth, offset, session)
+        commentpage = await fetch_page(deviation_id, type_id, depth, offset, csrf_token, session)
 
         yield commentpage
 
@@ -274,12 +279,13 @@ async def fetch_pages(
         offset = commentpage.next_offset
 
 
-async def fetch(url: str, session: network.Session) -> Comment:
+async def fetch(url: str, csrf_token: str, session: network.Session) -> Comment:
     """
     Asynchronously fetch a single comment to a deviation.
 
     Args:
         url: The URL to a comment.
+        csrf_token: DeviantArt-issued CSRF token valid for the session.
         session: A session to use for requesting data.
 
     Returns:
@@ -294,7 +300,7 @@ async def fetch(url: str, session: network.Session) -> Comment:
 
     # Let exceptions bubble up.
     depth = 0
-    async for commentpage in fetch_pages(deviation_id, type_id, depth, session):
+    async for commentpage in fetch_pages(deviation_id, type_id, depth, csrf_token, session):
         for comment in commentpage.comments:
             if comment.url == url:
                 return comment

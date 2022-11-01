@@ -7,6 +7,9 @@
 ### Changed
  * Bump all dependencies to latest.
 
+### Fixed
+ * Fix failed artist and comment fetching.
+
 ## 1.0.1 - 2022-01-15
 ### Fixed
  * Exclude comments to the critique journal from the database.
