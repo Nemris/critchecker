@@ -8,7 +8,7 @@ The blocks are sorted by newest, and the critique URL order is preserved.
 
 ## Requirements
 
-To run, `critchecker` needs [beautifulsoup4][1], [tqdm][2] and [aiohttp][3]].
+To run, `critchecker` needs [beautifulsoup4][1], [tqdm][2] and [aiohttp][3].
 Install them with:
 
 ```bash
@@ -99,11 +99,7 @@ poetry run critchecker
 ```
 
 Remember to **create a branch for every change** you want to implement or
-modify. For examples, use the following command to check the commit log:
-
-```bash
-git log --graph
-```
+modify.
 
 ### Code style
 
@@ -113,10 +109,9 @@ type in function definitions.
 Always write a docstring for the functions you create. When in doubt, check the
 existing code.
 
-For the love of all that is dear, **avoid classes**. Use dataclasses if
-representing a complex object, but resort to functions for the actual logic.
-Functional programming-like functions with as little side-effects as possible
-make testing and importing modules easier.
+For the love of all that is dear, **avoid inheritance outside of exception
+hierarchies**. Likewise, **do not use global variables**, although global
+"constants" are fine.
 
 Use the imperative tense in your commit titles, and make sure their length is
 50 characters max.
@@ -126,7 +121,7 @@ Use the imperative tense in your commit titles, and make sure their length is
 Before issuing a PR, **ensure that Pylint does not raise any warning apart from
 TODOs**.
 If you feel the need to silence a warning, **leave a comment explaining your
-reasons**.
+reasons**, or mention the rationale in the commit message.
 
 To lint a file, use:
 
@@ -157,9 +152,9 @@ poetry run pytest --hypothesis-show-statistics
 
 ## Credits
 
-This tool wouldn't exist if not for a certain [BeckyKidus][8] - it's thanks
-to this noodle's encouragement and typo-spotting sight if `critchecker` was
-even ready for Critmas 2020.
+This tool wouldn't exist if not for a certain [BeckyKidus][8] - it's thanks to
+this noodle's encouragement and typo-spotting sight if `critchecker` was even
+ready for Critmas 2020.
 Checking out her art is highly recommended.
 
 A thank you goes to [neurotype][9] too - as the Critmas 2020 host, she sure had
