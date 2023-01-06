@@ -8,6 +8,11 @@ import aiohttp
 import bs4
 
 
+DEFAULT_HEADERS = {
+    "Accept-Encoding": "gzip"
+}
+
+
 class FetchingError(Exception):
     """ A generic error occurred while fetching data. """
 
@@ -22,6 +27,22 @@ class ConnectionTimedOutError(FetchingError):
 
 # Aliasing to avoid importing aiohttp in other modules to get sessions.
 Session = aiohttp.ClientSession
+
+
+def prepare_session(headers: dict | None = None) -> Session:
+    """
+    Prepare a Session with certain headers.
+
+    Args:
+        headers: Headers to add to the session.
+
+    Returns:
+        A Session with the specified headers.
+    """
+    if headers is None:
+        headers = DEFAULT_HEADERS
+
+    return Session(headers=headers)
 
 
 async def fetch(url: str, session: Session, **kwargs: dict) -> dict:

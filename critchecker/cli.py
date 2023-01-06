@@ -385,9 +385,7 @@ async def main(journal: str, report: pathlib.Path) -> None:
     except ValueError as exception:
         exit_fatal(f"{exception}.")
 
-    async with network.Session() as session:
-        session.headers.update({"Accept-Encoding": "gzip"})
-
+    async with network.prepare_session() as session:
         csrf_token = await network.fetch_csrf_token(session)
 
         try:
