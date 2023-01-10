@@ -237,7 +237,7 @@ def timestamps(draw):
 
     timestamp = "".join(
         [
-            draw(datetimes()).strftime("%Y-%m-%dT%H:%M:%S"),
+            draw(datetimes()).isoformat(timespec="seconds"),
             "-0800"
         ]
     )
