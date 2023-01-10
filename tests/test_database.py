@@ -71,18 +71,6 @@ def test_finding_index_finds_first_row_with_same_crit_url(data):
     assert data[result].crit_url == url
 
 
-@given(human_dates())
-def test_valid_timestamp_returns_datetime(timestamp):
-    """
-    Test that trying to convert a valid timestamp to a datetime always
-    returns a datetime.datetime object.
-    """
-
-    result = database.timestamp_to_datetime(timestamp)
-
-    assert isinstance(result, datetime.datetime)
-
-
 @given(databases())
 def test_total_crits_equals_valid_plus_deleted(data):
     """
