@@ -333,7 +333,7 @@ def database_rows(draw):
         "crit_words": draw(integers()),
         "block_posted_at": draw(timestamps()),
         "block_edited_at": draw(timestamps()),
-        "crit_url": draw(deviation_urls()),
+        "crit_url": draw(comment_urls()),
         "block_url": draw(comment_urls())
     }
 
