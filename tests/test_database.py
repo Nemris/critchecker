@@ -1,14 +1,11 @@
 """ Tests for critchecker.database. """
 
-import datetime
 import io
 
 from hypothesis import given
 
 from critchecker import database
 from tests.strategies import databases
-from tests.strategies import human_dates
-from tests.strategies import timestamps
 
 
 # pylint: disable=no-value-for-parameter
@@ -43,17 +40,6 @@ def test_written_database_same_as_original(data):
         result = database.load(stream)
 
     assert result == data
-
-
-@given(timestamps())
-def test_formatted_timestamp_not_empty(timestamp):
-    """
-    Test that formatting a timestamp doesn't return an empty string.
-    """
-
-    result = database.format_timestamp(timestamp)
-
-    assert result != ""
 
 
 @given(databases())

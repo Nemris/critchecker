@@ -2,7 +2,6 @@
 
 import csv
 import dataclasses
-import datetime
 import typing
 
 
@@ -85,34 +84,6 @@ def dump(database: list[Row], outfile: typing.TextIO) -> int:
         written += 1
 
     return written
-
-
-def format_timestamp(timestamp: str) -> str:
-    """
-    Truncate and format a timestamp.
-
-    Args:
-        timestamp: The timestamp to format.
-
-    Returns:
-        The formatted timestamp.
-
-    Raises:
-        ValueError: If the timestamp is malformed.
-    """
-
-    if timestamp is None:
-        return ""
-
-    try:
-        as_datetime = datetime.datetime.strptime(
-            timestamp[:-5],
-            "%Y-%m-%dT%H:%M:%S"
-        )
-    except (ValueError, TypeError) as exception:
-        raise ValueError(f"'{timestamp}': malformed timestamp") from exception
-
-    return as_datetime.strftime("%Y/%m/%d %H:%M")
 
 
 def get_index_by_crit_url(url: str, data: list[Row]) -> int:

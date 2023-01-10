@@ -246,19 +246,6 @@ def timestamps(draw):
 
 
 @composite
-def human_dates(draw):
-    """
-    Strategy to generate formatted dates.
-
-    Formatted dates are in the format YYYY/MM/DD HH:MM.
-    """
-
-    date = draw(datetimes()).strftime("%Y/%m/%d %H:%M")
-
-    return date
-
-
-@composite
 def draft_comments(draw):
     """
     Strategy to generate DA "draft" comment JSONs.
@@ -339,13 +326,13 @@ def database_rows(draw):
     """
 
     row = {
-        "crit_posted_at": draw(human_dates()),
-        "crit_edited_at": draw(human_dates()),
+        "crit_posted_at": draw(timestamps()),
+        "crit_edited_at": draw(timestamps()),
         "crit_author": draw(usernames()),
         "deviation_artist": draw(usernames()),
         "crit_words": draw(integers()),
-        "block_posted_at": draw(human_dates()),
-        "block_edited_at": draw(human_dates()),
+        "block_posted_at": draw(timestamps()),
+        "block_edited_at": draw(timestamps()),
         "crit_url": draw(deviation_urls()),
         "block_url": draw(comment_urls())
     }
