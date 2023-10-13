@@ -27,7 +27,6 @@ class Row():  # pylint: disable=too-many-instance-attributes
     crit_posted_at: str = None
     crit_edited_at: typing.Optional[str] = None
     crit_author: str = None
-    deviation_artist: str = None
     crit_words: int = 0
     block_posted_at: str = None
     block_edited_at: typing.Optional[str] = None

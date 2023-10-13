@@ -329,7 +329,6 @@ def database_rows(draw):
         "crit_posted_at": draw(timestamps()),
         "crit_edited_at": draw(timestamps()),
         "crit_author": draw(usernames()),
-        "deviation_artist": draw(usernames()),
         "crit_words": draw(integers()),
         "block_posted_at": draw(timestamps()),
         "block_edited_at": draw(timestamps()),

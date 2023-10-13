@@ -188,82 +188,8 @@ def get_unique_deviation_ids(data: list[database.Row]) -> set[int]:
     return set((comment.extract_ids_from_url(row.crit_url)[1] for row in data))
 
 
-async def map_deviation_to_artist(
-    deviation_id: int,
-    csrf_token: str,
-    session: network.Session
-) -> dict[int, str]:
-    """
-    Asynchronously fetch the artist matching a deviation ID.
-
-    Args:
-        deviation_id: A deviation ID whose matching artist to fetch.
-        csrf_token: DeviantArt-issued CSRF token valid for the session.
-        session: A session to use for requesting data.
-
-    Returns:
-        A deviation artist mapped to a deviation ID.
-
-    Raises:
-        deviation.DeviationError: If an error occurred while fetxhing a
-            deviation's metadata.
-    """
-    try:
-        metadata = await deviation.fetch_metadata(deviation_id, csrf_token, session)
-    except deviation.BadDeviationError:
-        # The deviation is likely unavailable.
-        return {deviation_id: ""}
-
-    return {deviation_id: metadata.author}
-
-
-async def fetch_artists(
-    data: list[database.Row],
-    csrf_token: str,
-    session: network.Session
-) -> dict[int, str]:
-    """
-    Fetch the artist for every unique deviation in a critique database.
-
-    Args:
-        data: The critique database.
-        csrf_token: DeviantArt-issued CSRF token valid for the session.
-        session: A session to use for requesting data.
-
-    Returns:
-        A mapping between unique deviation IDs and artists.
-
-    Raises:
-        ValueError: If a critique URL is malformed.
-        deviation.DeviationError: If an error occurred while fetching
-            a deviation's metadata.
-    """
-
-    mapping = dict.fromkeys(get_unique_deviation_ids(data))
-
-    tasks = []
-    for deviation_id in mapping:
-        tasks.append(
-            asyncio.create_task(
-                map_deviation_to_artist(deviation_id, csrf_token, session)
-            )
-        )
-
-    progress_bar = tqdm.asyncio.tqdm.as_completed(
-        tasks,
-        desc="Fetching artists",
-        unit="artist"
-    )
-
-    for task in progress_bar:
-        mapping.update(await task)
-
-    return mapping
-
-
 async def fill_row(
     row: database.Row,
-    mapping: dict[int, str],
     csrf_token: str,
     session: network.Session
 ) -> database.Row:
@@ -272,7 +198,6 @@ async def fill_row(
 
     Args:
         row: An initialized database row.
-        mapping: A mapping between unique deviation IDs and artists.
         csrf_token: DeviantArt-issued CSRF token valid for the session.
         session: A session to use for requesting data.
 
@@ -283,9 +208,6 @@ async def fill_row(
         comment.CommentError: If an error occurred while fetching the
             critique.
     """
-
-    # Always fill the deviation artist beforehand.
-    row.deviation_artist = mapping[comment.extract_ids_from_url(row.crit_url)[1]]
 
     try:
         critique = await comment.fetch(row.crit_url, csrf_token, session)
@@ -303,7 +225,6 @@ async def fill_row(
 
 async def fill_database(
     data: list[database.Row],
-    mapping: dict[int, str],
     csrf_token: str,
     session: network.Session
 ) -> list[database.Row]:
@@ -312,7 +233,6 @@ async def fill_database(
 
     Args:
         data: The critique database.
-        mapping: A mapping between unique deviation IDs and artists.
         csrf_token: DeviantArt-issued CSRF token valid for the session.
         session: A session to use for requesting data.
 
@@ -328,7 +248,7 @@ async def fill_database(
     for row in data:
         tasks.append(
             asyncio.create_task(
-                fill_row(row, mapping, csrf_token, session)
+                fill_row(row, csrf_token, session)
             )
         )
 
@@ -397,12 +317,7 @@ async def main(journal: str, report: pathlib.Path) -> None:
         data = filter_database(data, journal_metadata[0])
 
         try:
-            mapping = await fetch_artists(data, csrf_token, session)
-        except (ValueError, deviation.DeviationError) as exception:
-            exit_fatal(f"{exception}.")
-
-        try:
-            data = await fill_database(data, mapping, csrf_token, session)
+            data = await fill_database(data, csrf_token, session)
         except comment.CommentError as exception:
             exit_fatal(f"{exception}.")
 

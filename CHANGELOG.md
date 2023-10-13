@@ -4,6 +4,9 @@
 ### Changed
  * Stop post-processing timestamps.
 
+### Removed
+ * Stop fetching deviation artists.
+
 ## 1.0.2 - 2022-12-21
 ### Added
  * Support for Python 3.11.
