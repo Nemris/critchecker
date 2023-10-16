@@ -6,7 +6,7 @@ import re
 
 import bs4
 
-from critchecker import network
+from critchecker import client
 
 
 class CommentError(Exception):
@@ -184,13 +184,12 @@ def extract_ids_from_url(url: str) -> tuple[int, int, int]:
         raise ValueError(f"'{url}': invalid comment URL") from exception
 
 
-async def fetch_page(  # pylint: disable=too-many-arguments
+async def fetch_page(
     deviation_id: int,
     type_id: int,
     depth: int,
     offset: int,
-    csrf_token: str,
-    session: network.Session
+    da_client: client.Client
 ) -> CommentPage:
     """
     Asynchronously fetch a page of comments to a deviation.
@@ -204,8 +203,7 @@ async def fetch_page(  # pylint: disable=too-many-arguments
         depth: The amount of allowed replies to a comment. A depth of
             zero returns only the topmost comments.
         offset: The starting offset of the comment page.
-        csrf_token: DeviantArt-issued CSRF token valid for the session.
-        session: A session to use for requesting data.
+        da_client: A client that interfaces with DeviantArt.
 
     Returns:
         A page of comments.
@@ -223,13 +221,12 @@ async def fetch_page(  # pylint: disable=too-many-arguments
         "order": "newest",
         "maxdepth": depth,
         "offset": offset,
-        "csrf_token": csrf_token,
         "limit": 50
     }
 
     try:
-        commentpage = await network.fetch_json(api_url, session, params=params)
-    except network.FetchingError as exception:
+        commentpage = await da_client.query_api(api_url, params)
+    except client.ClientError as exception:
         raise CommentPageFetchingError(exception) from exception
 
     return CommentPage(commentpage)
@@ -239,8 +236,7 @@ async def fetch_pages(
     deviation_id: int,
     type_id: int,
     depth: int,
-    csrf_token: str,
-    session: network.Session
+    da_client: client.Client
 ) -> CommentPage:
     """
     Asynchronously fetch all the pages of comments to a deviation.
@@ -254,8 +250,7 @@ async def fetch_pages(
         type_id: The parent deviation's type ID.
         depth: The amount of allowed replies to a comment. A depth of
             zero returns only the topmost comments.
-        csrf_token: DeviantArt-issued CSRF token valid for the session.
-        session: A session to use for requesting data.
+        da_client: A client that interfaces with DeviantArt.
 
     Yields:
         The next comment page.
@@ -269,7 +264,7 @@ async def fetch_pages(
     offset = 0
     while True:
         # Let exceptions bubble up.
-        commentpage = await fetch_page(deviation_id, type_id, depth, offset, csrf_token, session)
+        commentpage = await fetch_page(deviation_id, type_id, depth, offset, da_client)
 
         yield commentpage
 
@@ -279,14 +274,13 @@ async def fetch_pages(
         offset = commentpage.next_offset
 
 
-async def fetch(url: str, csrf_token: str, session: network.Session) -> Comment:
+async def fetch(url: str, da_client: client.Client) -> Comment:
     """
     Asynchronously fetch a single comment to a deviation.
 
     Args:
         url: The URL to a comment.
-        csrf_token: DeviantArt-issued CSRF token valid for the session.
-        session: A session to use for requesting data.
+        da_client: A client that interfaces with DeviantArt.
 
     Returns:
         A single comment.
@@ -300,7 +294,7 @@ async def fetch(url: str, csrf_token: str, session: network.Session) -> Comment:
 
     # Let exceptions bubble up.
     depth = 0
-    async for commentpage in fetch_pages(deviation_id, type_id, depth, csrf_token, session):
+    async for commentpage in fetch_pages(deviation_id, type_id, depth, da_client):
         for comment in commentpage.comments:
             if comment.url == url:
                 return comment

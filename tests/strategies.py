@@ -361,31 +361,23 @@ def markups_with_csrf_token(draw):
 
     charset = string.ascii_letters + string.digits + "-."
 
-    token = "".join(
-        [
-            draw(
-                text(
-                    alphabet=" \t",
-                    min_size=1
-                )
-            ),
-            "window.__CSRF_TOKEN__ = '",
+    token = json.dumps(
+        {
+            "csrf":
             draw(
                 text(
                     alphabet=charset,
                     min_size=1
                 )
-            ),
-            "';"
-        ]
+            )
+        },
+        separators=(",", ":")
     )
 
-    markup = "\n".join(
-        [
+    markup = "".join([
             "<script>",
             token,
             "</script>"
-        ]
-    )
+    ])
 
     return markup

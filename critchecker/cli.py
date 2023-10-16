@@ -8,10 +8,10 @@ import warnings
 
 import tqdm.asyncio
 
+from critchecker import client
 from critchecker import comment
 from critchecker import database
 from critchecker import deviation
-from critchecker import network
 
 
 def read_args() -> argparse.Namespace:
@@ -76,8 +76,7 @@ def get_journal_metadata(journal: str) -> tuple[int, int]:
 async def fetch_blocks(
     journal_id: int,
     journal_type: int,
-    csrf_token: str,
-    session: network.Session
+    da_client: client.Client
 ) -> list[comment.Comment]:
     """
     Fetch the critique blocks posted as comments to a launch journal.
@@ -87,8 +86,7 @@ async def fetch_blocks(
     Args:
         journal_id: The launch journal's ID.
         journal_type: The launch journal's type ID.
-        csrf_token: DeviantArt-issued CSRF token valid for the session.
-        session: A session to use for requesting data.
+        da_client: A client that interfaces with DeviantArt.
 
     Returns:
         The comments containing at least one link to another comment.
@@ -103,7 +101,7 @@ async def fetch_blocks(
     blocks = []
     progress_bar = tqdm.asyncio.tqdm(
         comment.fetch_pages(
-            journal_id, journal_type, depth, csrf_token, session
+            journal_id, journal_type, depth, da_client
         ),
         desc="Analyzing comment pages",
         unit="page"
@@ -190,16 +188,14 @@ def get_unique_deviation_ids(data: list[database.Row]) -> set[int]:
 
 async def fill_row(
     row: database.Row,
-    csrf_token: str,
-    session: network.Session
+    da_client: client.Client
 ) -> database.Row:
     """
     Fetch the critique data belonging to a database row and fill it.
 
     Args:
         row: An initialized database row.
-        csrf_token: DeviantArt-issued CSRF token valid for the session.
-        session: A session to use for requesting data.
+        da_client: A client that interfaces with DeviantArt.
 
     Returns:
         The database row with the missing fields filled.
@@ -210,7 +206,7 @@ async def fill_row(
     """
 
     try:
-        critique = await comment.fetch(row.crit_url, csrf_token, session)
+        critique = await comment.fetch(row.crit_url, da_client)
     except comment.NoSuchCommentError:
         # Probably a hidden critique - skip filling critique metadata.
         return row
@@ -225,16 +221,14 @@ async def fill_row(
 
 async def fill_database(
     data: list[database.Row],
-    csrf_token: str,
-    session: network.Session
+    da_client: client.Client
 ) -> list[database.Row]:
     """
     Asynchronously fetch critiques and fill the critique database.
 
     Args:
         data: The critique database.
-        csrf_token: DeviantArt-issued CSRF token valid for the session.
-        session: A session to use for requesting data.
+        da_client: A client that interfaces with DeviantArt.
 
     Returns:
         The filled critique database.
@@ -248,7 +242,7 @@ async def fill_database(
     for row in data:
         tasks.append(
             asyncio.create_task(
-                fill_row(row, csrf_token, session)
+                fill_row(row, da_client)
             )
         )
 
@@ -305,21 +299,24 @@ async def main(journal: str, report: pathlib.Path) -> None:
     except ValueError as exception:
         exit_fatal(f"{exception}.")
 
-    async with network.prepare_session() as session:
-        csrf_token = await network.fetch_csrf_token(session)
+    try:
+        da_client = await client.Client.new()
+    except client.ClientError as exc:
+        exit_fatal(f"{exc}.")
 
+    async with da_client:
         try:
-            blocks = await fetch_blocks(*journal_metadata, csrf_token, session)
-        except comment.CommentError as exception:
-            exit_fatal(f"{exception}.")
+            blocks = await fetch_blocks(*journal_metadata, da_client)
+        except comment.CommentError as exc:
+            exit_fatal(f"{exc}.")
 
         data = initialize_database(blocks)
         data = filter_database(data, journal_metadata[0])
 
         try:
-            data = await fill_database(data, csrf_token, session)
-        except comment.CommentError as exception:
-            exit_fatal(f"{exception}.")
+            data = await fill_database(data, da_client)
+        except comment.CommentError as exc:
+            exit_fatal(f"{exc}.")
 
     # Cosmetic newline.
     print()
