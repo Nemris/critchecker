@@ -22,8 +22,6 @@ class Row():  # pylint: disable=too-many-instance-attributes
         block_url: The critique block's URL.
     """
 
-    # pylint: disable=unsubscriptable-object
-
     crit_posted_at: str = None
     crit_edited_at: typing.Optional[str] = None
     crit_author: str = None
