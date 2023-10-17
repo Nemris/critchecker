@@ -296,8 +296,8 @@ async def main(journal: str, report: pathlib.Path) -> None:
 
     try:
         journal_metadata = get_journal_metadata(journal)
-    except ValueError as exception:
-        exit_fatal(f"{exception}.")
+    except ValueError as exc:
+        exit_fatal(f"{exc}.")
 
     try:
         da_client = await client.Client.new()
@@ -323,9 +323,9 @@ async def main(journal: str, report: pathlib.Path) -> None:
 
     try:
         total_crits, valid_crits, deleted_crits = database.measure_stats(data)
-    except ValueError as exception:
+    except ValueError as exc:
         # An error at this point means the database is garbage.
-        exit_fatal(f"{exception}.")
+        exit_fatal(f"{exc}.")
 
     print(f"Total critiques:   {total_crits:>4}")
     print(f"Valid critiques:   {valid_crits:>4}")
@@ -333,8 +333,8 @@ async def main(journal: str, report: pathlib.Path) -> None:
 
     try:
         save_database(data, report)
-    except OSError as exception:
-        exit_fatal(f"{exception}.")
+    except OSError as exc:
+        exit_fatal(f"{exc}.")
 
 
 def wrapper() -> None:

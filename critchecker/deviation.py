@@ -21,8 +21,8 @@ def extract_id(url: str) -> str:
 
     try:
         return re.search(pattern, url).group(1)
-    except AttributeError as exception:
-        raise ValueError(f"'{url}': invalid deviation URL") from exception
+    except AttributeError as exc:
+        raise ValueError(f"'{url}': invalid deviation URL") from exc
 
 
 def extract_category(url: str) -> str:
@@ -43,8 +43,8 @@ def extract_category(url: str) -> str:
 
     try:
         return re.search(pattern, url).group(1)
-    except AttributeError as exception:
-        raise ValueError(f"'{url}': invalid deviation URL") from exception
+    except AttributeError as exc:
+        raise ValueError(f"'{url}': invalid deviation URL") from exc
 
 
 def typeid_of(category: str) -> int:

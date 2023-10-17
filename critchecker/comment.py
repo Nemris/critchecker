@@ -96,8 +96,8 @@ class Comment():  # pylint: disable=too-many-instance-attributes
                 for feature in features:
                     if feature["type"] == "WORD_COUNT_FEATURE":
                         self.words = feature["data"]["words"]
-        except KeyError as exception:
-            raise BadCommentError("malformed comment data") from exception
+        except KeyError as exc:
+            raise BadCommentError("malformed comment data") from exc
 
 
 @dataclasses.dataclass
@@ -135,8 +135,8 @@ class CommentPage():
             self.has_more = commentpage["hasMore"]
             self.next_offset = commentpage["nextOffset"]
             self.comments = [Comment(comment) for comment in commentpage["thread"]]
-        except (KeyError, BadCommentError) as exception:
-            raise BadCommentPageError("malformed comment page data") from exception
+        except (KeyError, BadCommentError) as exc:
+            raise BadCommentPageError("malformed comment page data") from exc
 
 
 def assemble_url(deviation_id: int, type_id: int, comment_id: int) -> str:
@@ -180,8 +180,8 @@ def extract_ids_from_url(url: str) -> tuple[int, int, int]:
 
     try:
         return tuple(int(num) for num in url.split("/")[-3:])
-    except (IndexError, ValueError) as exception:
-        raise ValueError(f"'{url}': invalid comment URL") from exception
+    except (IndexError, ValueError) as exc:
+        raise ValueError(f"'{url}': invalid comment URL") from exc
 
 
 async def fetch_page(
@@ -226,8 +226,8 @@ async def fetch_page(
 
     try:
         commentpage = await da_client.query_api(api_url, params)
-    except client.ClientError as exception:
-        raise CommentPageFetchingError(exception) from exception
+    except client.ClientError as exc:
+        raise CommentPageFetchingError(exc) from exc
 
     return CommentPage(commentpage)
 

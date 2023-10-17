@@ -100,8 +100,8 @@ def get_index_by_crit_url(url: str, data: list[Row]) -> int:
 
     try:
         index = next(index for index, row in enumerate(data) if row.crit_url == url)
-    except StopIteration as exception:
-        raise ValueError(f"'{url}' not found in database rows") from exception
+    except StopIteration as exc:
+        raise ValueError(f"'{url}' not found in database rows") from exc
 
     return index
 
@@ -124,8 +124,8 @@ def measure_stats(data: list[Row]) -> tuple[int, int, int]:
     try:
         # Let's use a generator to avoid copying the whole database.
         deleted = sum((True for row in data if row.crit_words == 0))
-    except AttributeError as exception:
-        raise ValueError("invalid database") from exception
+    except AttributeError as exc:
+        raise ValueError("invalid database") from exc
 
     total = len(data)
     valid = total - deleted
