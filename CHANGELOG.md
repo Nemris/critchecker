@@ -3,6 +3,8 @@
 ## Unreleased
 ### Changed
  * Stop post-processing timestamps.
+ * Bump minimum Python version to 3.11.
+ * Bump all dependencies to latest.
 
 ### Removed
  * Stop fetching deviation artists.
