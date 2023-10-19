@@ -1,6 +1,6 @@
 # critchecker
 
-Critchecker is a Python 3.9+ tool that fetches all the critique blocks and
+Critchecker is a Python 3.11+ tool that fetches all the critique blocks and
 critiques posted by Critmas participants, counts the critique length, and
 stores the info in a CSV database.
 
