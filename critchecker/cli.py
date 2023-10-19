@@ -6,6 +6,7 @@ import pathlib
 import sys
 import warnings
 
+from bs4 import MarkupResemblesLocatorWarning
 import tqdm.asyncio
 
 from critchecker import client
@@ -343,7 +344,7 @@ def wrapper() -> None:
     """
 
     # Mute bs4 since it tends to be overzealous.
-    warnings.filterwarnings("ignore", category=UserWarning, module="bs4")
+    warnings.filterwarnings("ignore", category=MarkupResemblesLocatorWarning)
 
     loop = asyncio.get_event_loop()
 
