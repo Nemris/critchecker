@@ -8,7 +8,7 @@ The blocks are sorted by newest, and the critique URL order is preserved.
 
 ## Requirements
 
-To run, `critchecker` needs [beautifulsoup4][1], [tqdm][2] and [aiohttp][3].
+To run, `critchecker` needs [beautifulsoup4], [tqdm] and [aiohttp].
 Install them with:
 
 ```bash
@@ -77,7 +77,7 @@ subdirectory.
 
 ### Build dependencies
 
-To build `critchecker`, you will need [poetry][4] to manage project building,
+To build `critchecker`, you will need [Poetry] to manage project building,
 virtual environments and dependencies.
 
 ## Contributing
@@ -90,7 +90,7 @@ poetry install
 ```
 
 This will setup a virtual environment with all the required dependencies,
-including [pylint][5], [pytest][6] and [hypothesis][7].
+including [pylint], [pytest] and [hypothesis].
 Moreover, it'll make `critchecker` itself be installed inside the virtualenv,
 and thus executable with:
 
@@ -152,29 +152,29 @@ poetry run pytest --hypothesis-show-statistics
 
 ## Credits
 
-This tool wouldn't exist if not for a certain [BeckyKidus][8] - it's thanks to
+This tool wouldn't exist if not for a certain [BeckyKidus] - it's thanks to
 this noodle's encouragement and typo-spotting sight if `critchecker` was even
 ready for Critmas 2020.
 Checking out her art is highly recommended.
 
-A thank you goes to [neurotype][9] too - as the Critmas 2020 host, she sure had
+A thank you goes to [neurotype] too - as the Critmas 2020 host, she sure had
 a say on this tool's database format.
 
 ## License
 
-This program is licensed under the terms of the [MIT][10] license.
+This program is licensed under the terms of the [MIT] license.
 
-Check [LICENSE.txt][11] for further info.
+Check [LICENSE.txt] for further info.
 
 
-[1]:https://www.crummy.com/software/BeautifulSoup/
-[2]:https://tqdm.github.io/
-[3]:https://docs.aiohttp.org/
-[4]:https://python-poetry.org/
-[5]:https://www.pylint.org/
-[6]:https://pytest.org/
-[7]:https://hypothesis.readthedocs.io/
-[8]:https://www.deviantart.com/beckykidus
-[9]:https://www.deviantart.com/neurotype
-[10]:https://choosealicense.com/licenses/mit/
-[11]:./LICENSE.txt
+[beautifulsoup4]:https://www.crummy.com/software/BeautifulSoup/
+[tqdm]:https://tqdm.github.io/
+[aiohttp]:https://docs.aiohttp.org/
+[poetry]:https://python-poetry.org/
+[pylint]:https://pylint.readthedocs.io/
+[pytest]:https://pytest.org/
+[hypothesis]:https://hypothesis.readthedocs.io/
+[BeckyKidus]:https://www.deviantart.com/beckykidus
+[neurotype]:https://www.deviantart.com/neurotype
+[MIT]:https://choosealicense.com/licenses/mit/
+[LICENSE.txt]:./LICENSE.txt
