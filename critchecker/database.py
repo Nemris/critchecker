@@ -38,7 +38,6 @@ class Row:  # pylint: disable=too-many-instance-attributes
         Raises:
             ValueError: If converting to int fails.
         """
-
         self.crit_words = int(self.crit_words)
 
 
@@ -53,7 +52,6 @@ def load(infile: typing.TextIO) -> list[Row]:
     Returns:
         A list of Critmas database rows.
     """
-
     return [Row(**row) for row in csv.DictReader(infile)]
 
 
@@ -68,7 +66,6 @@ def dump(database: list[Row], outfile: typing.TextIO) -> int:
     Returns:
         The number of written rows.
     """
-
     header = dataclasses.asdict(database[0]).keys()
     writer = csv.DictWriter(outfile, header)
 
@@ -93,7 +90,6 @@ def get_index_by_crit_url(url: str, data: list[Row]) -> int:
     Raises:
         ValueError: If no matching row is found.
     """
-
     try:
         index = next(index for index, row in enumerate(data) if row.crit_url == url)
     except StopIteration as exc:
@@ -116,7 +112,6 @@ def measure_stats(data: list[Row]) -> tuple[int, int, int]:
     Raises:
         ValueError: If the database contains invalid rows.
     """
-
     try:
         # Let's use a generator to avoid copying the whole database.
         deleted = sum((True for row in data if row.crit_words == 0))

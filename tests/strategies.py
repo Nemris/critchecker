@@ -20,7 +20,6 @@ def ids(draw):
 
     IDs contain only integers greater than zero.
     """
-
     sample_id = draw(integers(1))
 
     return sample_id
@@ -34,7 +33,6 @@ def comment_urls(draw):
     Comment URLs contain the \"https://www.deviantart.com/comments\"
     prefix, followed by three numeric IDs greater than zero.
     """
-
     comment_url = "/".join(
         [
             "https://www.deviantart.com/comments",
@@ -55,7 +53,6 @@ def random_urls(draw):
     Random URLs contain the \"https://\" prefix, followed by any other
     string.
     """
-
     random_url = "/".join(
         [
             "https://",
@@ -76,7 +73,6 @@ def mixed_urls(draw):
     Mixed URLs contain the \"https://\" prefix, and are joined by
     newlines.
     """
-
     urls = "\n".join(
         draw(lists(random_urls() | comment_urls(), max_size=3)),
     )
@@ -93,7 +89,6 @@ def usernames(draw):
     ASCII characters, digits and hyphens, the latter never at the
     beginning or end of the string.
     """
-
     charset = string.ascii_letters + string.digits + "-"
 
     username = draw(text(alphabet=charset, min_size=3))
@@ -110,7 +105,6 @@ def comment_markups(draw):
 
     Comment markups contain text and can contain HTML tags.
     """
-
     comment_markup = "".join([draw(text()), "<br />", draw(text())])
 
     return comment_markup
@@ -123,7 +117,6 @@ def comment_bodies(draw):
 
     Bodies are non-empty and contain text.
     """
-
     comment_body = " ".join(
         draw(lists(text(min_size=1), min_size=1)),
     )
@@ -139,7 +132,6 @@ def deviation_categories(draw):
     Categories contain lowercase ASCII characters and hyphens, the
     latter never at the beginning or end of the string.
     """
-
     charset = string.ascii_lowercase + "-"
 
     category = draw(text(alphabet=charset, min_size=1))
@@ -157,7 +149,6 @@ def deviation_names(draw):
     Deviation names contain an ASCII string with a trailing hyphen,
     followed by a numeric ID greater than zero.
     """
-
     charset = string.ascii_letters + string.digits + "-"
 
     name = "-".join(
@@ -178,7 +169,6 @@ def deviation_urls(draw):
     Deviation URLs contain the \"https://www.deviantart.com\" prefix,
     followed by a username, a deviation category and a deviation name.
     """
-
     url = "/".join(
         [
             "https://www.deviantart.com",
@@ -198,7 +188,6 @@ def timestamps(draw):
 
     Timestamps are in the format YYYY-MM-DDTHH:MM:SS-0800.
     """
-
     timestamp = "".join(
         [
             draw(datetimes()).isoformat(timespec="seconds"),
@@ -214,7 +203,6 @@ def draft_comments(draw):
     """
     Strategy to generate DA "draft" comment JSONs.
     """
-
     draft_comment = {
         "commentId": draw(ids()),
         "parentId": draw(ids()),
@@ -256,7 +244,6 @@ def comment_pages(draw):
     Comment pages contain zero or more comments, a boolean flag that
     signals the presence of future pages and a positive integer offset.
     """
-
     # Generating comments is expensive - cap it.
     comment_page = {
         "hasMore": draw(booleans()),
@@ -277,7 +264,6 @@ def database_rows(draw):
     """
     Strategy to generate database rows.
     """
-
     row = {
         "crit_posted_at": draw(timestamps()),
         "crit_edited_at": draw(timestamps()),
@@ -299,7 +285,6 @@ def databases(draw):
 
     Databases are lists of rows.
     """
-
     # Generating database rows is expensive - cap it.
     database = draw(lists(database_rows(), min_size=1, max_size=2))
 
@@ -311,7 +296,6 @@ def markups_with_csrf_token(draw):
     """
     Strategy to generate HTML markup containing CSRF tokens.
     """
-
     charset = string.ascii_letters + string.digits + "-."
 
     token = json.dumps(

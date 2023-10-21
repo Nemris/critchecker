@@ -65,7 +65,6 @@ class Comment:  # pylint: disable=too-many-instance-attributes
         Raises:
             BadCommentError: If a required key is missing from comment.
         """
-
         # "Draft" comments have a word count ready, "writer" comments
         # must be parsed.
 
@@ -128,7 +127,6 @@ class CommentPage:
             BadCommentPageError: If a required key is missing from
                 comment or instantiating a Comment fails.
         """
-
         try:
             self.has_more = commentpage["hasMore"]
             self.next_offset = commentpage["nextOffset"]
@@ -149,7 +147,6 @@ def assemble_url(deviation_id: int, type_id: int, comment_id: int) -> str:
     Returns:
         The URL to the comment.
     """
-
     base_url = "https://www.deviantart.com"
     relative_url = "/".join(
         ["comments", str(type_id), str(deviation_id), str(comment_id)]
@@ -172,7 +169,6 @@ def extract_ids_from_url(url: str) -> tuple[int, int, int]:
     Raises:
         ValueError: If the comment URL is invalid.
     """
-
     try:
         return tuple(int(num) for num in url.split("/")[-3:])
     except (IndexError, ValueError) as exc:
@@ -204,7 +200,6 @@ async def fetch_page(
         CommentPageFetchingError: If an error occurs while fetching
             comment page data.
     """
-
     api_url = "https://www.deviantart.com/_napi/shared_api/comments/thread"
     params = {
         "itemid": deviation_id,
@@ -248,7 +243,6 @@ async def fetch_pages(
         CommentPageFetchingError: If an error occurs while fetching
             comment page data.
     """
-
     offset = 0
     while True:
         # Let exceptions bubble up.
@@ -277,7 +271,6 @@ async def fetch(url: str, da_client: client.Client) -> Comment:
         BadCommentPageError: If instantiating the CommentPage fails.
         NoSuchCommentError: If the requested comment is not found.
     """
-
     type_id, deviation_id, _ = extract_ids_from_url(url)
 
     # Let exceptions bubble up.
@@ -301,7 +294,6 @@ def is_url_valid(url: str) -> bool:
     Returns:
         True if the URL is a valid comment URL, False otherwise.
     """
-
     pattern = r"https://www\.deviantart\.com/comments/\d+/\d+/\d+"
 
     return bool(re.match(pattern, url))
@@ -317,7 +309,6 @@ def extract_comment_urls(comment: str) -> list[str]:
     Returns:
         The extracted and deduplicated comment URLs.
     """
-
     pattern = r"https://www\.deviantart\.com/comments/\d+/\d+/\d+"
 
     return list(dict.fromkeys(re.findall(pattern, comment)))
@@ -335,7 +326,6 @@ def markup_to_text(markup: str) -> str:
         The comment stripped of HTML tags and with \"<br>\" tags
             replaced with newlines.
     """
-
     soup = bs4.BeautifulSoup(markup, features="html.parser")
 
     for tag in soup.find_all("br"):
@@ -354,5 +344,4 @@ def count_words(comment: str) -> int:
     Returns:
         The number of words in the comment.
     """
-
     return len(comment.split())

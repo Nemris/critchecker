@@ -16,7 +16,6 @@ def extract_id(url: str) -> str:
     Raises:
         ValueError: If no deviation ID is found.
     """
-
     pattern = r"https://www\.deviantart\.com/[A-Za-z0-9\-]+/[a-z\-]+/.+-(\d+)$"
 
     try:
@@ -38,7 +37,6 @@ def extract_category(url: str) -> str:
     Raises:
         ValueError: If no deviation category is found.
     """
-
     pattern = r"https://www\.deviantart\.com/[A-Za-z0-9\-]+/([a-z\-]+)/.+-\d+$"
 
     try:
@@ -57,7 +55,6 @@ def typeid_of(category: str) -> int:
     Returns:
         The type ID matching a deviation category, or zero.
     """
-
     # Currently implementing art and journals only.
     type_ids = {
         "art": 1,

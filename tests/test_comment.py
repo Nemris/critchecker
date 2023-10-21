@@ -23,7 +23,6 @@ def test_comment_data_same_as_dict(comment_dict):
     Test that instantiating a comment.Comment doesn't alter the sample
     data.
     """
-
     blocks = json.loads(comment_dict["textContent"]["html"]["markup"])["blocks"]
     features = json.loads(comment_dict["textContent"]["html"]["features"])
     result = comment.Comment(comment_dict)
@@ -46,7 +45,6 @@ def test_commentpage_data_same_as_dict(commentpage_dict):
     Test that instantiating a comment.CommentPage doesn't alter the
     sample data.
     """
-
     result = comment.CommentPage(commentpage_dict)
 
     assert result.has_more == commentpage_dict["hasMore"]
@@ -62,7 +60,6 @@ def test_comment_url_contains_all_ids(deviation_id, type_id, comment_id):
     """
     Test that the assembled comment URL contains the starting IDs.
     """
-
     result = comment.assemble_url(deviation_id, type_id, comment_id)
 
     assert str(deviation_id) in result
@@ -75,7 +72,6 @@ def test_validating_valid_comment_urls_returns_true(comment_url):
     """
     Test that validating valid comment URLs returns True.
     """
-
     result = comment.is_url_valid(comment_url)
 
     assert result
@@ -86,7 +82,6 @@ def test_assembled_comment_urls_pass_validation(deviation_id, type_id, comment_i
     """
     Test that the assembled comment URL passes verification.
     """
-
     result = comment.assemble_url(deviation_id, type_id, comment_id)
 
     assert comment.is_url_valid(result)
@@ -97,7 +92,6 @@ def test_extracted_urls_pass_validation(body):
     """
     Test that the extracted comment URLs pass validation.
     """
-
     result = comment.extract_comment_urls(body)
 
     for link in result:
@@ -109,7 +103,6 @@ def test_extracted_ids_from_url_are_three(comment_url):
     """
     Test that the IDs extracted from a comment URLs are three.
     """
-
     result = comment.extract_ids_from_url(comment_url)
 
     assert len(result) == 3
@@ -120,7 +113,6 @@ def test_comment_markup_to_text_replaces_br_tag(comment_markup):
     """
     Test that converting comment markup to text strips \"<br>\" tags.
     """
-
     result = comment.markup_to_text(comment_markup)
 
     assert "<br />" not in result
@@ -132,7 +124,6 @@ def test_comment_word_count_is_always_positive_int(body):
     Test that counting the words in a comment always returns a positive
     integer.
     """
-
     result = comment.count_words(body)
 
     assert result >= 0

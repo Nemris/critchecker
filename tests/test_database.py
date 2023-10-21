@@ -17,7 +17,6 @@ def test_rows_written_equal_to_database_len_plus_one(data):
     Test that the number of rows written to a file is equal to
     len(data)+1.
     """
-
     data = [database.Row(**row) for row in data]
 
     with io.StringIO(newline="") as stream:
@@ -31,7 +30,6 @@ def test_written_database_same_as_original(data):
     """
     Test that writing and loading the database doesn't alter it.
     """
-
     data = [database.Row(**row) for row in data]
 
     with io.StringIO(newline="") as stream:
@@ -48,7 +46,6 @@ def test_finding_index_finds_first_row_with_same_crit_url(data):
     Test that finding an index in a database finds the first row with a
     specific crit_url, irrespective of the other instance attributes.
     """
-
     data = [database.Row(**row) for row in data]
 
     url = data[-1].crit_url
@@ -63,7 +60,6 @@ def test_total_crits_equals_valid_plus_deleted(data):
     Test that the amount of total critiques in a database equals the
     amount of valid plus deleted ones.
     """
-
     data = [database.Row(**row) for row in data]
 
     result = database.measure_stats(data)

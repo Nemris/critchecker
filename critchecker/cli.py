@@ -22,7 +22,6 @@ def read_args() -> argparse.Namespace:
     Returns:
         The parsed command-line arguments.
     """
-
     parser = argparse.ArgumentParser(
         description="Extract and measure the length of DeviantArt Critmas critiques."
     )
@@ -50,7 +49,6 @@ def exit_fatal(msg: str) -> None:
     Args:
         msg: The error message to print.
     """
-
     sys.exit(f"Fatal: {msg}")
 
 
@@ -67,7 +65,6 @@ def get_journal_metadata(journal: str) -> tuple[int, int]:
     Raises:
         ValueError: If the journal URL is malformed.
     """
-
     journal_id = deviation.extract_id(journal)
     journal_type = deviation.typeid_of(deviation.extract_category(journal))
 
@@ -94,7 +91,6 @@ async def fetch_blocks(
         comment.CommentError: If an error occurred while fetching the
             critique blocks.
     """
-
     depth = 0
 
     blocks = []
@@ -122,7 +118,6 @@ def initialize_database(blocks: list[comment.Comment]) -> list[database.Row]:
         The critique database populated with the available block data,
             without duplicate critiques.
     """
-
     data = []
     for block in blocks:
         for crit_url in comment.extract_comment_urls(block.body):
@@ -156,7 +151,6 @@ def filter_database(data: list[database.Row], deviation_id: int) -> list[databas
     Returns:
         The filtered critique database.
     """
-
     return [
         row
         for row in data
@@ -177,7 +171,6 @@ def get_unique_deviation_ids(data: list[database.Row]) -> set[int]:
     Raises:
         ValueError: If a critique URL is malformed.
     """
-
     return set((comment.extract_ids_from_url(row.crit_url)[1] for row in data))
 
 
@@ -196,7 +189,6 @@ async def fill_row(row: database.Row, da_client: client.Client) -> database.Row:
         comment.CommentError: If an error occurred while fetching the
             critique.
     """
-
     try:
         critique = await comment.fetch(row.crit_url, da_client)
     except comment.NoSuchCommentError:
@@ -228,7 +220,6 @@ async def fill_database(
         comment.CommentError: If an error occurred while fetching a
             critique.
     """
-
     tasks = [asyncio.create_task(fill_row(row, da_client)) for row in data]
 
     progress_bar = tqdm.asyncio.tqdm.as_completed(
@@ -263,7 +254,6 @@ def save_database(data: list[database.Row], path: pathlib.Path) -> None:
     Raises:
         OSError: If an error happens while writing the CSV database.
     """
-
     with path.open("w", newline="") as outfile:
         database.dump(data, outfile)
 
@@ -276,7 +266,6 @@ async def main(journal: str, report: pathlib.Path) -> None:
         journal: The URL of the Critmas launch journal.
         report: The path and filename to save the CSV report as.
     """
-
     try:
         journal_metadata = get_journal_metadata(journal)
     except ValueError as exc:
@@ -324,7 +313,6 @@ def wrapper() -> None:
     """
     Entry point for critchecker.
     """
-
     # Mute bs4 since it tends to be overzealous.
     warnings.filterwarnings("ignore", category=MarkupResemblesLocatorWarning)
 

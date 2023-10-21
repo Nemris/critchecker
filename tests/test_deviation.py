@@ -16,7 +16,6 @@ def test_deviation_id_is_decimal(url):
     """
     Test that a deviation ID represents a decimal number.
     """
-
     result = deviation.extract_id(url)
 
     assert result.isdecimal()
@@ -27,7 +26,6 @@ def test_deviation_category_is_lowercase(url):
     """
     Test that a deviation category is lowercase.
     """
-
     result = deviation.extract_category(url)
 
     assert result.islower()
@@ -40,7 +38,6 @@ def test_deviation_type_id_greater_equal_to_zero(category):
     """
     Test that a deviation type ID is greater or equal to zero.
     """
-
     result = deviation.typeid_of(category)
 
     assert result >= 0

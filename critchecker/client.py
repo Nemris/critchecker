@@ -31,7 +31,6 @@ class Client:
 
     def __init__(self) -> None:
         """Initialize an instance of Client."""
-
         self._session = aiohttp.ClientSession(headers={"Accept-Encoding": "gzip"})
         self._token = None
 
@@ -54,7 +53,6 @@ class Client:
             ClientError: If an error occurred while connecting to the
                 server or the CSRF token couldn't be found.
         """
-
         # Use a 404 page to save data.
         url = "https://www.deviantart.com/_"
 
@@ -81,14 +79,12 @@ class Client:
         Returns:
             A new Client authenticated with DeviantArt.
         """
-
         client = cls()
         await client._authenticate()
         return client
 
     async def close(self) -> None:
         """Close the instance's underlying session."""
-
         await self._session.close()
 
     async def get(self, url: str, **kwargs) -> str:
@@ -109,7 +105,6 @@ class Client:
             ServerConnectionError: If an error occurred while
                 connecting to the server.
         """
-
         try:
             async with self._session.get(url, **kwargs) as resp:
                 resp.raise_for_status()
@@ -139,7 +134,6 @@ class Client:
                 connecting to the server.
             BadJSONError: If the server returned malformed JSON data.
         """
-
         params["csrf_token"] = self._token
         try:
             return json.loads(await self.get(url, params=params))
@@ -160,7 +154,6 @@ def extract_token(html: str) -> str:
     Raises:
         ValueError: If no token can be found.
     """
-
     pattern = re.compile(r"\"csrf\":\"(.+?)\"")
     soup = bs4.BeautifulSoup(html, features="html.parser")
 
