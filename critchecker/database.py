@@ -71,16 +71,12 @@ def dump(database: list[Row], outfile: typing.TextIO) -> int:
 
     header = dataclasses.asdict(database[0]).keys()
     writer = csv.DictWriter(outfile, header)
-    written = 0
 
     writer.writeheader()
-    written += 1
-
     for row in database:
         writer.writerow(dataclasses.asdict(row))
-        written += 1
 
-    return written
+    return len(database)+1
 
 
 def get_index_by_crit_url(url: str, data: list[Row]) -> int:

@@ -161,13 +161,11 @@ def filter_database(data: list[database.Row], deviation_id: int) -> list[databas
         The filtered critique database.
     """
 
-    filtered_data = []
-    for row in data:
-        critiqued_deviation = comment.extract_ids_from_url(row.crit_url)[1]
-        if critiqued_deviation != deviation_id:
-            filtered_data.append(row)
-
-    return filtered_data
+    return [
+        row
+        for row in data
+        if comment.extract_ids_from_url(row.crit_url)[1] != deviation_id
+    ]
 
 
 def get_unique_deviation_ids(data: list[database.Row]) -> set[int]:
@@ -239,13 +237,10 @@ async def fill_database(
             critique.
     """
 
-    tasks = []
-    for row in data:
-        tasks.append(
-            asyncio.create_task(
-                fill_row(row, da_client)
-            )
-        )
+    tasks = [
+        asyncio.create_task(fill_row(row, da_client))
+        for row in data
+    ]
 
     progress_bar = tqdm.asyncio.tqdm.as_completed(
         tasks,
