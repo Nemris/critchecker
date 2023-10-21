@@ -105,6 +105,9 @@ modify.
 
 This project follows the Black code style, so it's sufficient to run the
 formatter on your code prior to contributing it.
+Sometimes, it might make sense to have Black avoid cramming multiple lines in
+one for the sake of clarity. If your gut says that code would look better on
+multiple lines, append a trailing comma to the last line as per the [docs].
 
 Type-annotate both the parameters and return values of your functions and
 methods, and always add docstrings to public code.
@@ -175,6 +178,7 @@ Check [LICENSE.txt] for further info.
 [pytest]:https://pytest.org/
 [hypothesis]:https://hypothesis.readthedocs.io/
 [black]:https://black.readthedocs.io/
+[docs]:https://black.readthedocs.io/en/stable/the_black_code_style/current_style.html#the-magic-trailing-comma
 [BeckyKidus]:https://www.deviantart.com/beckykidus
 [neurotype]:https://www.deviantart.com/neurotype
 [MIT]:https://choosealicense.com/licenses/mit/

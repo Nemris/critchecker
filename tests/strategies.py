@@ -65,8 +65,8 @@ def random_urls(draw):
                         text(min_size=1),
                         min_size=1
                     )
-                )
-            )
+                ),
+            ),
         ]
     )
 
@@ -88,7 +88,7 @@ def mixed_urls(draw):
                 random_urls() | comment_urls(),
                 max_size=3
             )
-        )
+        ),
     )
 
     return urls
@@ -151,7 +151,7 @@ def comment_bodies(draw):
                 text(min_size=1),
                 min_size=1
             )
-        )
+        ),
     )
 
     return comment_body
@@ -199,7 +199,7 @@ def deviation_names(draw):
                     min_size=1
                 )
             ),
-            str(draw(ids()))
+            str(draw(ids())),
         ]
     )
 
@@ -238,7 +238,7 @@ def timestamps(draw):
     timestamp = "".join(
         [
             draw(datetimes()).isoformat(timespec="seconds"),
-            "-0800"
+            "-0800",
         ]
     )
 
@@ -269,9 +269,9 @@ def draft_comments(draw):
                         "blocks": [
                             {
                                 "text": draw(comment_bodies())
-                            }
+                            },
                         ]
-                    }
+                    },
                 ),
                 "features": json.dumps(
                     [
@@ -371,7 +371,7 @@ def markups_with_csrf_token(draw):
                 )
             )
         },
-        separators=(",", ":")
+        separators=(",", ":"),
     )
 
     markup = "".join([

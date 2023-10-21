@@ -30,7 +30,7 @@ def read_args() -> argparse.Namespace:
     parser.add_argument(
         "journal",
         type=str,
-        help="the URL of the Critmas launch journal"
+        help="the URL of the Critmas launch journal",
     )
     parser.add_argument(
         "-r",

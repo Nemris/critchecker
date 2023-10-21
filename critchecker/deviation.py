@@ -61,7 +61,7 @@ def typeid_of(category: str) -> int:
     # Currently implementing art and journals only.
     type_ids = {
         "art": 1,
-        "journal": 1
+        "journal": 1,
     }
 
     return type_ids.get(category, 0)
