@@ -90,7 +90,7 @@ poetry install
 ```
 
 This will setup a virtual environment with all the required dependencies,
-including [pylint], [pytest] and [hypothesis].
+including [pylint], [pytest], [hypothesis] and [black].
 Moreover, it'll make `critchecker` itself be installed inside the virtualenv,
 and thus executable with:
 
@@ -103,18 +103,18 @@ modify.
 
 ### Code style
 
-Use 4-spaces wide indentation, and type annotate every parameter and return
-type in function definitions.
+This project follows the Black code style, so it's sufficient to run the
+formatter on your code prior to contributing it.
 
-Always write a docstring for the functions you create. When in doubt, check the
-existing code.
+Type-annotate both the parameters and return values of your functions and
+methods, and always add docstrings to public code.
 
 For the love of all that is dear, **avoid inheritance outside of exception
 hierarchies**. Likewise, **do not use global variables**, although global
 "constants" are fine.
 
-Use the imperative tense in your commit titles, and make sure their length is
-50 characters max.
+Preferably, use the imperative tense in your commit titles, and make sure their
+length is 50 characters max.
 
 ### Linting
 
@@ -174,6 +174,7 @@ Check [LICENSE.txt] for further info.
 [pylint]:https://pylint.readthedocs.io/
 [pytest]:https://pytest.org/
 [hypothesis]:https://hypothesis.readthedocs.io/
+[black]:https://black.readthedocs.io/
 [BeckyKidus]:https://www.deviantart.com/beckykidus
 [neurotype]:https://www.deviantart.com/neurotype
 [MIT]:https://choosealicense.com/licenses/mit/
