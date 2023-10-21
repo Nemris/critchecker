@@ -14,4 +14,4 @@ def test_extracted_token_exists_in_markup(markup_with_csrf_token):
 
     result = client.extract_token(markup_with_csrf_token)
 
-    assert f"\"{result}\"" in markup_with_csrf_token
+    assert f'"{result}"' in markup_with_csrf_token

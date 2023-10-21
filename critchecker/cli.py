@@ -37,7 +37,7 @@ def read_args() -> argparse.Namespace:
         "--report",
         type=pathlib.Path,
         default=pathlib.Path.home().joinpath("critmas.csv"),
-        help="the path and filename to save the CSV report as"
+        help="the path and filename to save the CSV report as",
     )
 
     return parser.parse_args()
@@ -75,9 +75,7 @@ def get_journal_metadata(journal: str) -> tuple[int, int]:
 
 
 async def fetch_blocks(
-    journal_id: int,
-    journal_type: int,
-    da_client: client.Client
+    journal_id: int, journal_type: int, da_client: client.Client
 ) -> list[comment.Comment]:
     """
     Fetch the critique blocks posted as comments to a launch journal.
@@ -101,11 +99,9 @@ async def fetch_blocks(
 
     blocks = []
     progress_bar = tqdm.asyncio.tqdm(
-        comment.fetch_pages(
-            journal_id, journal_type, depth, da_client
-        ),
+        comment.fetch_pages(journal_id, journal_type, depth, da_client),
         desc="Analyzing comment pages",
-        unit="page"
+        unit="page",
     )
     async for page in progress_bar:
         for block in page.comments:
@@ -139,10 +135,10 @@ def initialize_database(blocks: list[comment.Comment]) -> list[database.Row]:
 
             data.append(
                 database.Row(
-                    block_posted_at = block.posted_at,
-                    block_edited_at = block.edited_at,
-                    crit_url = crit_url,
-                    block_url = block.url
+                    block_posted_at=block.posted_at,
+                    block_edited_at=block.edited_at,
+                    crit_url=crit_url,
+                    block_url=block.url,
                 )
             )
 
@@ -185,10 +181,7 @@ def get_unique_deviation_ids(data: list[database.Row]) -> set[int]:
     return set((comment.extract_ids_from_url(row.crit_url)[1] for row in data))
 
 
-async def fill_row(
-    row: database.Row,
-    da_client: client.Client
-) -> database.Row:
+async def fill_row(row: database.Row, da_client: client.Client) -> database.Row:
     """
     Fetch the critique data belonging to a database row and fill it.
 
@@ -219,8 +212,7 @@ async def fill_row(
 
 
 async def fill_database(
-    data: list[database.Row],
-    da_client: client.Client
+    data: list[database.Row], da_client: client.Client
 ) -> list[database.Row]:
     """
     Asynchronously fetch critiques and fill the critique database.
@@ -237,15 +229,10 @@ async def fill_database(
             critique.
     """
 
-    tasks = [
-        asyncio.create_task(fill_row(row, da_client))
-        for row in data
-    ]
+    tasks = [asyncio.create_task(fill_row(row, da_client)) for row in data]
 
     progress_bar = tqdm.asyncio.tqdm.as_completed(
-        tasks,
-        desc="Fetching critiques",
-        unit="crit"
+        tasks, desc="Fetching critiques", unit="crit"
     )
 
     for task in progress_bar:

@@ -6,7 +6,7 @@ import typing
 
 
 @dataclasses.dataclass
-class Row():  # pylint: disable=too-many-instance-attributes
+class Row:  # pylint: disable=too-many-instance-attributes
     """
     A single row in a Critmas report.
 
@@ -76,7 +76,7 @@ def dump(database: list[Row], outfile: typing.TextIO) -> int:
     for row in database:
         writer.writerow(dataclasses.asdict(row))
 
-    return len(database)+1
+    return len(database) + 1
 
 
 def get_index_by_crit_url(url: str, data: list[Row]) -> int:

@@ -10,27 +10,27 @@ from critchecker import client
 
 
 class CommentError(Exception):
-    """ Common base class for exceptions related to comments. """
+    """Common base class for exceptions related to comments."""
 
 
 class NoSuchCommentError(CommentError):
-    """ The requested comment does not exist. """
+    """The requested comment does not exist."""
 
 
 class CommentPageFetchingError(CommentError):
-    """ An error occurred while fetching comment page data. """
+    """An error occurred while fetching comment page data."""
 
 
 class BadCommentError(CommentError):
-    """ The API returned malformed comment data. """
+    """The API returned malformed comment data."""
 
 
 class BadCommentPageError(CommentError):
-    """ The API returned malformed comment page data. """
+    """The API returned malformed comment page data."""
 
 
 @dataclasses.dataclass
-class Comment():  # pylint: disable=too-many-instance-attributes
+class Comment:  # pylint: disable=too-many-instance-attributes
     """
     A single comment in a thread.
 
@@ -71,9 +71,7 @@ class Comment():  # pylint: disable=too-many-instance-attributes
 
         try:
             self.url = assemble_url(
-                comment["itemId"],
-                comment["typeId"],
-                comment["commentId"]
+                comment["itemId"], comment["typeId"], comment["commentId"]
             )
 
             self.parent_id = comment["parentId"]
@@ -101,7 +99,7 @@ class Comment():  # pylint: disable=too-many-instance-attributes
 
 
 @dataclasses.dataclass
-class CommentPage():
+class CommentPage:
     """
     A page of comments.
 
@@ -153,12 +151,9 @@ def assemble_url(deviation_id: int, type_id: int, comment_id: int) -> str:
     """
 
     base_url = "https://www.deviantart.com"
-    relative_url = "/".join([
-        "comments",
-        str(type_id),
-        str(deviation_id),
-        str(comment_id)
-    ])
+    relative_url = "/".join(
+        ["comments", str(type_id), str(deviation_id), str(comment_id)]
+    )
 
     return "/".join([base_url, relative_url])
 
@@ -185,11 +180,7 @@ def extract_ids_from_url(url: str) -> tuple[int, int, int]:
 
 
 async def fetch_page(
-    deviation_id: int,
-    type_id: int,
-    depth: int,
-    offset: int,
-    da_client: client.Client
+    deviation_id: int, type_id: int, depth: int, offset: int, da_client: client.Client
 ) -> CommentPage:
     """
     Asynchronously fetch a page of comments to a deviation.
@@ -221,7 +212,7 @@ async def fetch_page(
         "order": "newest",
         "maxdepth": depth,
         "offset": offset,
-        "limit": 50
+        "limit": 50,
     }
 
     try:
@@ -233,10 +224,7 @@ async def fetch_page(
 
 
 async def fetch_pages(
-    deviation_id: int,
-    type_id: int,
-    depth: int,
-    da_client: client.Client
+    deviation_id: int, type_id: int, depth: int, da_client: client.Client
 ) -> CommentPage:
     """
     Asynchronously fetch all the pages of comments to a deviation.

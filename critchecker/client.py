@@ -11,25 +11,26 @@ import bs4
 
 
 class ClientError(Exception):
-    """ A generic error occurred while fetching data. """
+    """A generic error occurred while fetching data."""
 
 
 class ResponseError(ClientError):
-    """ There was an error in the server's response. """
+    """There was an error in the server's response."""
 
 
 class ServerConnectionError(ClientError):
-    """ An error occurred while connecting to the server. """
+    """An error occurred while connecting to the server."""
+
 
 class BadJSONError(ClientError):
-    """ The DeviantArt API returned invalid JSON. """
+    """The DeviantArt API returned invalid JSON."""
 
 
 class Client:
-    """ A client that interfaces with DeviantArt. """
+    """A client that interfaces with DeviantArt."""
 
     def __init__(self) -> None:
-        """ Initialize an instance of Client. """
+        """Initialize an instance of Client."""
 
         self._session = aiohttp.ClientSession(headers={"Accept-Encoding": "gzip"})
         self._token = None
@@ -41,7 +42,7 @@ class Client:
         self,
         exc_type: type[BaseException] | None,
         exc_val: BaseException | None,
-        exc_tb: types.TracebackType | None
+        exc_tb: types.TracebackType | None,
     ) -> None:
         await self.close()
 
@@ -86,7 +87,7 @@ class Client:
         return client
 
     async def close(self) -> None:
-        """ Close the instance's underlying session. """
+        """Close the instance's underlying session."""
 
         await self._session.close()
 
@@ -114,7 +115,9 @@ class Client:
                 resp.raise_for_status()
                 return await resp.text()
         except aiohttp.ClientResponseError as exc:
-            raise ResponseError(f"{exc.request_info.url}: {exc.status} {exc.message}") from exc
+            raise ResponseError(
+                f"{exc.request_info.url}: {exc.status} {exc.message}"
+            ) from exc
         except aiohttp.ClientConnectionError as exc:
             raise ServerConnectionError(exc) from exc
 
@@ -162,10 +165,6 @@ def extract_token(html: str) -> str:
     soup = bs4.BeautifulSoup(html, features="html.parser")
 
     try:
-        return (
-            pattern
-            .search(soup.find("script", string=pattern).text)
-            .group(1)
-        )
+        return pattern.search(soup.find("script", string=pattern).text).group(1)
     except AttributeError as exc:
         raise ValueError("CSRF token not found") from exc

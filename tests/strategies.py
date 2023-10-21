@@ -40,7 +40,7 @@ def comment_urls(draw):
             "https://www.deviantart.com/comments",
             str(draw(ids())),
             str(draw(ids())),
-            str(draw(ids()))
+            str(draw(ids())),
         ]
     )
 
@@ -60,12 +60,7 @@ def random_urls(draw):
         [
             "https://",
             "/".join(
-                draw(
-                    lists(
-                        text(min_size=1),
-                        min_size=1
-                    )
-                ),
+                draw(lists(text(min_size=1), min_size=1)),
             ),
         ]
     )
@@ -83,12 +78,7 @@ def mixed_urls(draw):
     """
 
     urls = "\n".join(
-        draw(
-            lists(
-                random_urls() | comment_urls(),
-                max_size=3
-            )
-        ),
+        draw(lists(random_urls() | comment_urls(), max_size=3)),
     )
 
     return urls
@@ -106,12 +96,7 @@ def usernames(draw):
 
     charset = string.ascii_letters + string.digits + "-"
 
-    username = draw(
-        text(
-            alphabet=charset,
-            min_size=3
-        )
-    )
+    username = draw(text(alphabet=charset, min_size=3))
 
     assume(not username.startswith("-") and not username.endswith("-"))
 
@@ -126,13 +111,7 @@ def comment_markups(draw):
     Comment markups contain text and can contain HTML tags.
     """
 
-    comment_markup = "".join(
-        [
-            draw(text()),
-            "<br />",
-            draw(text())
-        ]
-    )
+    comment_markup = "".join([draw(text()), "<br />", draw(text())])
 
     return comment_markup
 
@@ -146,12 +125,7 @@ def comment_bodies(draw):
     """
 
     comment_body = " ".join(
-        draw(
-            lists(
-                text(min_size=1),
-                min_size=1
-            )
-        ),
+        draw(lists(text(min_size=1), min_size=1)),
     )
 
     return comment_body
@@ -168,12 +142,7 @@ def deviation_categories(draw):
 
     charset = string.ascii_lowercase + "-"
 
-    category = draw(
-        text(
-            alphabet=charset,
-            min_size=1
-        )
-    )
+    category = draw(text(alphabet=charset, min_size=1))
 
     assume(not category.startswith("-") and not category.endswith("-"))
 
@@ -193,12 +162,7 @@ def deviation_names(draw):
 
     name = "-".join(
         [
-            draw(
-                text(
-                    alphabet=charset,
-                    min_size=1
-                )
-            ),
+            draw(text(alphabet=charset, min_size=1)),
             str(draw(ids())),
         ]
     )
@@ -220,7 +184,7 @@ def deviation_urls(draw):
             "https://www.deviantart.com",
             draw(usernames()),
             draw(deviation_categories()),
-            draw(deviation_names())
+            draw(deviation_names()),
         ]
     )
 
@@ -258,18 +222,14 @@ def draft_comments(draw):
         "itemId": draw(ids()),
         "posted": draw(timestamps()),
         "edited": draw(timestamps()),
-        "user": {
-            "username": draw(usernames())
-        },
+        "user": {"username": draw(usernames())},
         "textContent": {
             "html": {
                 "type": "draft",
                 "markup": json.dumps(
                     {
                         "blocks": [
-                            {
-                                "text": draw(comment_bodies())
-                            },
+                            {"text": draw(comment_bodies())},
                         ]
                     },
                 ),
@@ -277,14 +237,12 @@ def draft_comments(draw):
                     [
                         {
                             "type": "WORD_COUNT_FEATURE",
-                            "data": {
-                                "words": draw(integers(1))
-                            }
+                            "data": {"words": draw(integers(1))},
                         }
                     ]
-                )
+                ),
             }
-        }
+        },
     }
 
     return draft_comment
@@ -303,17 +261,12 @@ def comment_pages(draw):
     comment_page = {
         "hasMore": draw(booleans()),
         "nextOffset": draw(none() | integers(1)),
-        "thread": draw(
-            lists(
-                draft_comments(),
-                max_size=2
-            )
-        )
+        "thread": draw(lists(draft_comments(), max_size=2)),
     }
 
     assume(
-        (comment_page["hasMore"] and comment_page["nextOffset"] is not None) or
-        (not comment_page["hasMore"] and comment_page["nextOffset"] is None)
+        (comment_page["hasMore"] and comment_page["nextOffset"] is not None)
+        or (not comment_page["hasMore"] and comment_page["nextOffset"] is None)
     )
 
     return comment_page
@@ -333,7 +286,7 @@ def database_rows(draw):
         "block_posted_at": draw(timestamps()),
         "block_edited_at": draw(timestamps()),
         "crit_url": draw(comment_urls()),
-        "block_url": draw(comment_urls())
+        "block_url": draw(comment_urls()),
     }
 
     return row
@@ -362,22 +315,10 @@ def markups_with_csrf_token(draw):
     charset = string.ascii_letters + string.digits + "-."
 
     token = json.dumps(
-        {
-            "csrf":
-            draw(
-                text(
-                    alphabet=charset,
-                    min_size=1
-                )
-            )
-        },
+        {"csrf": draw(text(alphabet=charset, min_size=1))},
         separators=(",", ":"),
     )
 
-    markup = "".join([
-            "<script>",
-            token,
-            "</script>"
-    ])
+    markup = "".join(["<script>", token, "</script>"])
 
     return markup
