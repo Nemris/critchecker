@@ -52,27 +52,8 @@ def exit_fatal(msg: str) -> None:
     sys.exit(f"Fatal: {msg}")
 
 
-def get_journal_metadata(journal: str) -> tuple[int, int]:
-    """
-    Extract the journal ID and type ID.
-
-    Args:
-        journal: The URL of the Critmas journal.
-
-    Returns:
-        A tuple containing the journal ID and type ID.
-
-    Raises:
-        ValueError: If the journal URL is malformed.
-    """
-    journal_id = deviation.extract_id(journal)
-    journal_type = deviation.typeid_of(deviation.extract_category(journal))
-
-    return (int(journal_id), int(journal_type))
-
-
 async def fetch_blocks(
-    journal_id: int, journal_type: int, da_client: client.Client
+    journal: deviation.Deviation, da_client: client.Client
 ) -> list[comment.Comment]:
     """
     Fetch the critique blocks posted as comments to a launch journal.
@@ -80,8 +61,7 @@ async def fetch_blocks(
     Valid critique blocks contain at least one link to a critique.
 
     Args:
-        journal_id: The launch journal's ID.
-        journal_type: The launch journal's type ID.
+        journal: The launch journal.
         da_client: A client that interfaces with DeviantArt.
 
     Returns:
@@ -95,7 +75,7 @@ async def fetch_blocks(
 
     blocks = []
     progress_bar = tqdm.asyncio.tqdm(
-        comment.fetch_pages(journal_id, journal_type, depth, da_client),
+        comment.fetch_pages(journal.id, journal.type_id, depth, da_client),
         desc="Analyzing comment pages",
         unit="page",
     )
@@ -267,7 +247,7 @@ async def main(journal: str, report: pathlib.Path) -> None:
         report: The path and filename to save the CSV report as.
     """
     try:
-        journal_metadata = get_journal_metadata(journal)
+        journal = deviation.Deviation(journal)
     except ValueError as exc:
         exit_fatal(f"{exc}.")
 
@@ -278,12 +258,12 @@ async def main(journal: str, report: pathlib.Path) -> None:
 
     async with da_client:
         try:
-            blocks = await fetch_blocks(*journal_metadata, da_client)
+            blocks = await fetch_blocks(journal, da_client)
         except comment.CommentError as exc:
             exit_fatal(f"{exc}.")
 
         data = initialize_database(blocks)
-        data = filter_database(data, journal_metadata[0])
+        data = filter_database(data, journal.id)
 
         try:
             data = await fill_database(data, da_client)

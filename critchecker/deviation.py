@@ -1,64 +1,72 @@
 """ Functions that handle DA deviations. """
 
+import dataclasses
 import re
 
 
-def extract_id(url: str) -> str:
+@dataclasses.dataclass
+class Deviation:
     """
-    Extract the ID from a deviation URL.
+    A single deviation.
 
     Args:
-        url: The URL to a deviation.
-
-    Returns:
-        The deviation ID.
-
-    Raises:
-        ValueError: If no deviation ID is found.
+        url: The URL pointing to the deviation.
     """
-    pattern = r"https://www\.deviantart\.com/[A-Za-z0-9\-]+/[a-z\-]+/.+-(\d+)$"
 
-    try:
-        return re.search(pattern, url).group(1)
-    except AttributeError as exc:
-        raise ValueError(f"'{url}': invalid deviation URL") from exc
+    url: str
 
+    def _search_pattern(self, pattern: str) -> str:
+        """
+        Search for pattern in the URL to this deviation.
 
-def extract_category(url: str) -> str:
-    """
-    Extract the category from a deviation URL.
+        Args:
+            pattern: Pattern to search for, which will be appended to
+                "www.deviantart.com".
 
-    Args:
-        url: The URL to a deviation.
+        Returns:
+            The region matching pattern.
 
-    Returns:
-        The deviation category.
+        Raises:
+            AttributeError: If no matches are found.
+        """
+        # Let's ignore the schema for now.
+        base = r"www\.deviantart\.com"
+        return re.search(f"{base}{pattern}", self.url).group(1)
 
-    Raises:
-        ValueError: If no deviation category is found.
-    """
-    pattern = r"https://www\.deviantart\.com/[A-Za-z0-9\-]+/([a-z\-]+)/.+-\d+$"
+    def __post_init__(self) -> None:
+        """Validate this deviation by checking its URL."""
+        try:
+            _ = self.artist
+            _ = self.category
+            _ = self.id
+        except AttributeError as exc:
+            raise ValueError(f"{self.url!r}: invalid deviation URL") from exc
 
-    try:
-        return re.search(pattern, url).group(1)
-    except AttributeError as exc:
-        raise ValueError(f"'{url}': invalid deviation URL") from exc
+    @property
+    def artist(self) -> str:
+        """The deviation's artist."""
+        pattern = r"/([A-Za-z0-9\-]+)/"
+        return self._search_pattern(pattern)
 
+    @property
+    def category(self) -> str:
+        """The deviation's category."""
+        pattern = r"/.+/([a-z\-]+)/"
+        return self._search_pattern(pattern)
 
-def typeid_of(category: str) -> int:
-    """
-    Return a type ID matching the deviation category, or zero.
+    @property
+    def id(self) -> int:  # pylint: disable=invalid-name
+        """The deviation's ID."""
+        pattern = r"/.+/.+/.+-(\d+)$"
+        return int(self._search_pattern(pattern))
 
-    Args:
-        category: The deviation category.
+    @property
+    def type_id(self) -> int:
+        """The deviation's type ID."""
+        # Consider only these categories for the time being.
+        mapping = {
+            "art": 1,
+            "journal": 1,
+        }
 
-    Returns:
-        The type ID matching a deviation category, or zero.
-    """
-    # Currently implementing art and journals only.
-    type_ids = {
-        "art": 1,
-        "journal": 1,
-    }
-
-    return type_ids.get(category, 0)
+        return mapping.get(self.category, 0)

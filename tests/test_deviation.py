@@ -1,43 +1,34 @@
 """ Tests for critchecker.deviation. """
 
-from hypothesis import example
 from hypothesis import given
+from hypothesis.strategies import one_of
+import pytest
 
 from critchecker import deviation
+from tests.strategies import comment_urls
 from tests.strategies import deviation_urls
-from tests.strategies import deviation_categories
+from tests.strategies import random_urls
 
 
 # pylint: disable=no-value-for-parameter
 
 
 @given(deviation_urls())
-def test_deviation_id_is_decimal(url):
+def test_deviation_urls_pass_validation(url):
     """
-    Test that a deviation ID represents a decimal number.
+    Test that a deviation.Deviation accepts deviation URLs.
     """
-    result = deviation.extract_id(url)
+    result = deviation.Deviation(url)
 
-    assert result.isdecimal()
+    assert result.artist in url
+    assert result.category in url
+    assert str(result.id) in url
 
 
-@given(deviation_urls())
-def test_deviation_category_is_lowercase(url):
+@given(one_of(comment_urls(), random_urls()))
+def test_misc_urls_are_rejected(url):
     """
-    Test that a deviation category is lowercase.
+    Test that a deviation.Deviation rejects non-deviation URLs.
     """
-    result = deviation.extract_category(url)
-
-    assert result.islower()
-
-
-@given(deviation_categories())
-@example("art")
-@example("journal")
-def test_deviation_type_id_greater_equal_to_zero(category):
-    """
-    Test that a deviation type ID is greater or equal to zero.
-    """
-    result = deviation.typeid_of(category)
-
-    assert result >= 0
+    with pytest.raises(ValueError):
+        deviation.Deviation(url)
