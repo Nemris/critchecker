@@ -7,6 +7,9 @@
  * Bump all dependencies to latest.
 
 ### Removed
+ * Support for legacy "Writer" comments, irrelevant since at least 2020.
+
+### Removed
  * Stop fetching deviation artists.
 
 ## 1.0.2 - 2022-12-21

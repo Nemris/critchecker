@@ -8,6 +8,7 @@ from hypothesis.strategies import booleans
 from hypothesis.strategies import composite
 from hypothesis.strategies import datetimes
 from hypothesis.strategies import integers
+from hypothesis.strategies import just
 from hypothesis.strategies import lists
 from hypothesis.strategies import none
 from hypothesis.strategies import text
@@ -99,18 +100,6 @@ def usernames(draw):
 
 
 @composite
-def comment_markups(draw):
-    """
-    Strategy to generate DA comment markups.
-
-    Comment markups contain text and can contain HTML tags.
-    """
-    comment_markup = "".join([draw(text()), "<br />", draw(text())])
-
-    return comment_markup
-
-
-@composite
 def comment_bodies(draw):
     """
     Strategy to generate DA comment bodies.
@@ -199,21 +188,20 @@ def timestamps(draw):
 
 
 @composite
-def draft_comments(draw):
+def comments(draw):
     """
-    Strategy to generate DA "draft" comment JSONs.
+    Strategy to generate DA comment JSONs of mixed types.
     """
-    draft_comment = {
+    comment = {
         "commentId": draw(ids()),
-        "parentId": draw(ids()),
         "typeId": draw(ids()),
         "itemId": draw(ids()),
         "posted": draw(timestamps()),
-        "edited": draw(timestamps()),
+        "edited": draw(none() | timestamps()),
         "user": {"username": draw(usernames())},
         "textContent": {
             "html": {
-                "type": "draft",
+                "type": draw(just("draft") | text()),
                 "markup": json.dumps(
                     {
                         "blocks": [
@@ -233,7 +221,7 @@ def draft_comments(draw):
         },
     }
 
-    return draft_comment
+    return comment
 
 
 @composite
@@ -248,7 +236,7 @@ def comment_pages(draw):
     comment_page = {
         "hasMore": draw(booleans()),
         "nextOffset": draw(none() | integers(1)),
-        "thread": draw(lists(draft_comments(), max_size=2)),
+        "thread": draw(lists(comments(), max_size=2)),
     }
 
     assume(
