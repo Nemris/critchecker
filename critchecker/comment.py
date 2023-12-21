@@ -1,10 +1,17 @@
 """ Functions and dataclasses that handle DA comments. """
 
+from __future__ import annotations
+
 import dataclasses
 import json
 import re
 
 from critchecker import client
+
+
+COMMENT_URL_PATTERN = re.compile(
+    r"https://www\.deviantart\.com/comments/(\d+)/(\d+)/(\d+)"
+)
 
 
 class CommentError(Exception):
@@ -32,6 +39,54 @@ class BadCommentPageError(CommentError):
 
 
 @dataclasses.dataclass
+class URL:
+    """
+    A URL to a comment.
+
+    Args:
+        deviation_id: The parent deviation's ID.
+        deviation_type: The parent deviation's type ID.
+        comment_id: The comment's ID.
+    """
+
+    deviation_id: str
+    deviation_type: str
+    comment_id: str
+
+    def __str__(self) -> str:
+        return "/".join(
+            [
+                "https://www.deviantart.com/comments",
+                self.deviation_type,
+                self.deviation_id,
+                self.comment_id,
+            ]
+        )
+
+    @classmethod
+    def from_str(cls, string: str) -> URL:
+        """
+        Build a URL from a string representation of a comment URL.
+
+        Args:
+            string: The string representation of a comment URL.
+
+        Returns:
+            An instance of URL pointing to a comment.
+
+        Raises:
+            ValueError: If the string isn't a valid comment URL.
+        """
+        try:
+            deviation_type, deviation_id, comment_id = COMMENT_URL_PATTERN.match(
+                string
+            ).groups()
+        except AttributeError as exc:
+            raise ValueError(f"{string!r}: invalid comment URL") from exc
+        return cls(deviation_id, deviation_type, comment_id)
+
+
+@dataclasses.dataclass
 class Comment:
     """
     A comment in a thread.
@@ -47,34 +102,12 @@ class Comment:
     """
 
     data: dataclasses.InitVar[dict]
-    url: str = None
+    url: URL = None
     posted_at: str = None
     edited_at: str | None = None
     author: str = None
     body: str = None
     words: int = None
-
-    @staticmethod
-    def _assemble_url(deviation_id: int, type_id: int, comment_id: int) -> str:
-        """
-        Assemble the URL to a comment.
-
-        Args:
-            deviation_id: The parent deviation's ID.
-            type_id: The parent deviation's type ID.
-            comment_id: The comment ID.
-
-        Returns:
-            The URL to the comment.
-        """
-        return "/".join(
-            [
-                "https://www.deviantart.com/comments",
-                str(type_id),
-                str(deviation_id),
-                str(comment_id),
-            ]
-        )
 
     @staticmethod
     def _assemble_body(data: dict) -> str:
@@ -131,8 +164,8 @@ class Comment:
             raise InvalidCommentTypeError(f"{kind!r}: invalid comment type")
 
         try:
-            self.url = self._assemble_url(
-                data["itemId"], data["typeId"], data["commentId"]
+            self.url = URL(
+                str(data["itemId"]), str(data["typeId"]), str(data["commentId"])
             )
             self.posted_at = data["posted"]
             self.edited_at = data["edited"]
@@ -141,6 +174,18 @@ class Comment:
             self.words = self._get_length(data)
         except KeyError as exc:
             raise BadCommentError("invalid comment data") from exc
+
+    def get_unique_comment_urls(self) -> list[URL]:
+        """
+        Extract the unique comment URLs contained in this comment.
+
+        Returns:
+            The unique comment URLs, in the same order as in the text.
+        """
+        return [
+            URL(ids[1], ids[0], ids[2])
+            for ids in list(dict.fromkeys(COMMENT_URL_PATTERN.findall(self.body)))
+        ]
 
 
 @dataclasses.dataclass
@@ -207,26 +252,6 @@ class CommentPage:
             raise BadCommentPageError("malformed comment page data") from exc
 
         self.comments = self._get_comments(thread)
-
-
-def extract_ids_from_url(url: str) -> tuple[int, int, int]:
-    """
-    Obtain the IDs from a comment URL.
-
-    Args:
-        url: The URL to a comment.
-
-    Returns:
-        A tuple of the extracted type ID, deviation ID and comment ID
-            as ints, in order.
-
-    Raises:
-        ValueError: If the comment URL is invalid.
-    """
-    try:
-        return tuple(int(num) for num in url.split("/")[-3:])
-    except (IndexError, ValueError) as exc:
-        raise ValueError(f"'{url}': invalid comment URL") from exc
 
 
 async def fetch_page(
@@ -325,44 +350,16 @@ async def fetch(url: str, da_client: client.Client) -> Comment:
         BadCommentPageError: If instantiating the CommentPage fails.
         NoSuchCommentError: If the requested comment is not found.
     """
-    type_id, deviation_id, _ = extract_ids_from_url(url)
+    url = URL.from_str(url)
 
     # Let exceptions bubble up.
     depth = 0
-    async for commentpage in fetch_pages(deviation_id, type_id, depth, da_client):
+    async for commentpage in fetch_pages(
+        url.deviation_id, url.deviation_type, depth, da_client
+    ):
         for comment in commentpage.comments:
             if comment.url == url:
                 return comment
 
     # Reaching this point means no matching comment was found.
     raise NoSuchCommentError(f"'{url}': comment not found")
-
-
-def is_url_valid(url: str) -> bool:
-    """
-    Check if the URL is a valid comment URL.
-
-    Args:
-        url: The URL to check.
-
-    Returns:
-        True if the URL is a valid comment URL, False otherwise.
-    """
-    pattern = r"https://www\.deviantart\.com/comments/\d+/\d+/\d+"
-
-    return bool(re.match(pattern, url))
-
-
-def extract_comment_urls(comment: str) -> list[str]:
-    """
-    Extract all the comment URLs in a comment, without duplicates.
-
-    Args:
-        comment: The comment to extract comment URLs from.
-
-    Returns:
-        The extracted and deduplicated comment URLs.
-    """
-    pattern = r"https://www\.deviantart\.com/comments/\d+/\d+/\d+"
-
-    return list(dict.fromkeys(re.findall(pattern, comment)))

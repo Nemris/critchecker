@@ -1,13 +1,15 @@
 """ Tests for critchecker.comment. """
 
+from hypothesis import assume
 from hypothesis import given
+from hypothesis.strategies import one_of
 import pytest
 
 from critchecker import comment
 from tests.strategies import comment_pages
 from tests.strategies import comment_urls
 from tests.strategies import comments
-from tests.strategies import mixed_urls
+from tests.strategies import random_urls
 
 
 @given(comments())
@@ -20,6 +22,18 @@ def test_comment_instantiation_succeeds_only_for_draft_type(comment_):
     else:
         with pytest.raises(comment.InvalidCommentTypeError):
             comment.Comment(comment_)
+
+
+@given(comments())
+def test_extracted_comment_urls_are_unique(comment_):
+    """
+    Test that the comment URLs extracted from a comment are unique.
+    """
+    assume(comment_["textContent"]["html"]["type"] == "draft")
+
+    urls = comment.Comment(comment_).get_unique_comment_urls()
+
+    assert all(urls.count(url) == 1 for url in urls)
 
 
 @given(comment_pages())
@@ -40,32 +54,13 @@ def test_commentpage_contains_only_draft_comments(comment_page):
     assert len(result.comments) == expected
 
 
-@given(comment_urls())
-def test_validating_valid_comment_urls_returns_true(comment_url):
+@given(one_of(random_urls(), comment_urls()))
+def test_url_instantiation_succeds_only_for_valid_urls(url):
     """
-    Test that validating valid comment URLs returns True.
+    Test that a comment.URL accepts only valid comment URLs.
     """
-    result = comment.is_url_valid(comment_url)
-
-    assert result
-
-
-@given(mixed_urls())
-def test_extracted_urls_pass_validation(body):
-    """
-    Test that the extracted comment URLs pass validation.
-    """
-    result = comment.extract_comment_urls(body)
-
-    for link in result:
-        assert comment.is_url_valid(link)
-
-
-@given(comment_urls())
-def test_extracted_ids_from_url_are_three(comment_url):
-    """
-    Test that the IDs extracted from a comment URLs are three.
-    """
-    result = comment.extract_ids_from_url(comment_url)
-
-    assert len(result) == 3
+    if "/comments/" in url:
+        comment.URL.from_str(url)
+    else:
+        with pytest.raises(ValueError):
+            comment.URL.from_str(url)

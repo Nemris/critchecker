@@ -104,10 +104,10 @@ def comment_bodies(draw):
     """
     Strategy to generate DA comment bodies.
 
-    Bodies are non-empty and contain text.
+    Bodies are non-empty, contain text and may contain mixed URLs.
     """
     comment_body = " ".join(
-        draw(lists(text(min_size=1), min_size=1)),
+        draw(lists(text(min_size=1) | mixed_urls(), min_size=1)),
     )
 
     return comment_body

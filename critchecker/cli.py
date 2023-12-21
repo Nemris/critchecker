@@ -81,7 +81,7 @@ async def fetch_blocks(
     )
     async for page in progress_bar:
         for block in page.comments:
-            if comment.extract_comment_urls(block.body):
+            if block.get_unique_comment_urls():
                 blocks.append(block)
 
     return blocks
@@ -100,9 +100,9 @@ def initialize_database(blocks: list[comment.Comment]) -> list[database.Row]:
     """
     data = []
     for block in blocks:
-        for crit_url in comment.extract_comment_urls(block.body):
+        for crit_url in block.get_unique_comment_urls():
             try:
-                database.get_index_by_crit_url(crit_url, data)
+                database.get_index_by_crit_url(str(crit_url), data)
                 continue
             except ValueError:
                 # No duplicate critiques, fall-through.
@@ -112,8 +112,8 @@ def initialize_database(blocks: list[comment.Comment]) -> list[database.Row]:
                 database.Row(
                     block_posted_at=block.posted_at,
                     block_edited_at=block.edited_at,
-                    crit_url=crit_url,
-                    block_url=block.url,
+                    crit_url=str(crit_url),
+                    block_url=str(block.url),
                 )
             )
 
@@ -134,7 +134,7 @@ def filter_database(data: list[database.Row], deviation_id: int) -> list[databas
     return [
         row
         for row in data
-        if comment.extract_ids_from_url(row.crit_url)[1] != deviation_id
+        if comment.URL.from_str(row.crit_url).deviation_id != deviation_id
     ]
 
 
@@ -151,7 +151,7 @@ def get_unique_deviation_ids(data: list[database.Row]) -> set[int]:
     Raises:
         ValueError: If a critique URL is malformed.
     """
-    return set((comment.extract_ids_from_url(row.crit_url)[1] for row in data))
+    return set((comment.URL.from_str(row.crit_url).deviation_id for row in data))
 
 
 async def fill_row(row: database.Row, da_client: client.Client) -> database.Row:
