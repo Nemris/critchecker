@@ -26,21 +26,6 @@ def test_rows_written_equal_to_database_len_plus_one(data):
 
 
 @given(databases())
-def test_written_database_same_as_original(data):
-    """
-    Test that writing and loading the database doesn't alter it.
-    """
-    data = [database.Row(**row) for row in data]
-
-    with io.StringIO(newline="") as stream:
-        database.dump(data, stream)
-        stream.seek(0)
-        result = database.load(stream)
-
-    assert result == data
-
-
-@given(databases())
 def test_finding_index_finds_first_row_with_same_crit_url(data):
     """
     Test that finding an index in a database finds the first row with a

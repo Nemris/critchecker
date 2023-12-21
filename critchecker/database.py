@@ -41,20 +41,6 @@ class Row:  # pylint: disable=too-many-instance-attributes
         self.crit_words = int(self.crit_words)
 
 
-def load(infile: typing.TextIO) -> list[Row]:
-    """
-    Load a Critmas database.
-
-    Args:
-        infile: A .read()-supporting file-like object containing a
-            CSV document.
-
-    Returns:
-        A list of Critmas database rows.
-    """
-    return [Row(**row) for row in csv.DictReader(infile)]
-
-
 def dump(database: list[Row], outfile: typing.TextIO) -> int:
     """
     Dump a Critmas database.
