@@ -3,12 +3,10 @@
 import json
 import string
 
-from hypothesis import assume
 from hypothesis.strategies import booleans
 from hypothesis.strategies import composite
 from hypothesis.strategies import datetimes
 from hypothesis.strategies import integers
-from hypothesis.strategies import just
 from hypothesis.strategies import lists
 from hypothesis.strategies import none
 from hypothesis.strategies import text
@@ -54,31 +52,23 @@ def random_urls(draw):
     Random URLs contain the \"https://\" prefix, followed by any other
     string.
     """
-    random_url = "/".join(
+    alphabet = string.ascii_lowercase + string.digits
+    random_url = "".join(
         [
             "https://",
             "/".join(
-                draw(lists(text(min_size=1), min_size=1)),
+                draw(
+                    lists(
+                        text(alphabet=alphabet, min_size=1, max_size=5),
+                        min_size=1,
+                        max_size=5,
+                    )
+                ),
             ),
         ]
     )
 
     return random_url
-
-
-@composite
-def mixed_urls(draw):
-    """
-    Strategy to generate mixed DA comment and random URLs.
-
-    Mixed URLs contain the \"https://\" prefix, and are joined by
-    newlines.
-    """
-    urls = "\n".join(
-        draw(lists(random_urls() | comment_urls(), max_size=3)),
-    )
-
-    return urls
 
 
 @composite
@@ -90,13 +80,13 @@ def usernames(draw):
     ASCII characters, digits and hyphens, the latter never at the
     beginning or end of the string.
     """
-    charset = string.ascii_letters + string.digits + "-"
+    alphabet = string.ascii_letters + string.digits
 
-    username = draw(text(alphabet=charset, min_size=3))
+    begin = draw(text(alphabet=alphabet, min_size=1, max_size=1))
+    middle = draw(text(alphabet=alphabet + "-", min_size=1))
+    end = draw(text(alphabet=alphabet, min_size=1, max_size=1))
 
-    assume(not username.startswith("-") and not username.endswith("-"))
-
-    return username
+    return "".join([begin, middle, end])
 
 
 @composite
@@ -104,10 +94,18 @@ def comment_bodies(draw):
     """
     Strategy to generate DA comment bodies.
 
-    Bodies are non-empty, contain text and may contain mixed URLs.
+    Bodies are non-empty and may contain text or mixed URLs.
     """
+    # Artificially duplicate data to allow testing for deduplication.
     comment_body = " ".join(
-        draw(lists(text(min_size=1) | mixed_urls(), min_size=1)),
+        draw(
+            lists(
+                text(min_size=1, max_size=5) | comment_urls() | random_urls(),
+                min_size=1,
+                max_size=5,
+            )
+        )
+        * 2,
     )
 
     return comment_body
@@ -121,13 +119,13 @@ def deviation_categories(draw):
     Categories contain lowercase ASCII characters and hyphens, the
     latter never at the beginning or end of the string.
     """
-    charset = string.ascii_lowercase + "-"
+    alphabet = string.ascii_lowercase
 
-    category = draw(text(alphabet=charset, min_size=1))
+    begin = draw(text(alphabet=alphabet, min_size=1, max_size=1))
+    middle = draw(text(alphabet=alphabet + "-", min_size=1, max_size=5))
+    end = draw(text(alphabet=alphabet, min_size=1, max_size=1))
 
-    assume(not category.startswith("-") and not category.endswith("-"))
-
-    return category
+    return "".join([begin, middle, end])
 
 
 @composite
@@ -138,11 +136,11 @@ def deviation_names(draw):
     Deviation names contain an ASCII string with a trailing hyphen,
     followed by a numeric ID greater than zero.
     """
-    charset = string.ascii_letters + string.digits + "-"
+    alphabet = string.ascii_letters + string.digits + "-"
 
     name = "-".join(
         [
-            draw(text(alphabet=charset, min_size=1)),
+            draw(text(alphabet=alphabet, min_size=1, max_size=15)),
             str(draw(ids())),
         ]
     )
@@ -190,7 +188,7 @@ def timestamps(draw):
 @composite
 def comments(draw):
     """
-    Strategy to generate DA comment JSONs of mixed types.
+    Strategy to generate DA comment JSONs.
     """
     comment = {
         "commentId": draw(ids()),
@@ -201,7 +199,7 @@ def comments(draw):
         "user": {"username": draw(usernames())},
         "textContent": {
             "html": {
-                "type": draw(just("draft") | text()),
+                "type": "draft",
                 "markup": json.dumps(
                     {
                         "blocks": [
@@ -225,6 +223,22 @@ def comments(draw):
 
 
 @composite
+def invalid_comments(draw):
+    """
+    Strategy to generate minimal DA comment JSONs of invalid type.
+    """
+    comment = {
+        "textContent": {
+            "html": {
+                "type": draw(text(max_size=3)),
+            }
+        }
+    }
+
+    return comment
+
+
+@composite
 def comment_pages(draw):
     """
     Strategy to generate DA comment page JSONs.
@@ -232,17 +246,14 @@ def comment_pages(draw):
     Comment pages contain zero or more comments, a boolean flag that
     signals the presence of future pages and a positive integer offset.
     """
-    # Generating comments is expensive - cap it.
-    comment_page = {
-        "hasMore": draw(booleans()),
-        "nextOffset": draw(none() | integers(1)),
-        "thread": draw(lists(comments(), max_size=2)),
-    }
+    has_more = draw(booleans())
+    next_offset = draw(integers(1)) if has_more else None
 
-    assume(
-        (comment_page["hasMore"] and comment_page["nextOffset"] is not None)
-        or (not comment_page["hasMore"] and comment_page["nextOffset"] is None)
-    )
+    comment_page = {
+        "hasMore": has_more,
+        "nextOffset": next_offset,
+        "thread": draw(lists(invalid_comments() | comments(), max_size=2)),
+    }
 
     return comment_page
 
@@ -254,11 +265,11 @@ def database_rows(draw):
     """
     row = {
         "crit_posted_at": draw(timestamps()),
-        "crit_edited_at": draw(timestamps()),
+        "crit_edited_at": draw(none() | timestamps()),
         "crit_author": draw(usernames()),
         "crit_words": draw(integers()),
         "block_posted_at": draw(timestamps()),
-        "block_edited_at": draw(timestamps()),
+        "block_edited_at": draw(none() | timestamps()),
         "crit_url": draw(comment_urls()),
         "block_url": draw(comment_urls()),
     }
@@ -273,8 +284,8 @@ def databases(draw):
 
     Databases are lists of rows.
     """
-    # Generating database rows is expensive - cap it.
-    database = draw(lists(database_rows(), min_size=1, max_size=2))
+    # Artificially duplicate data for some tests.
+    database = draw(lists(database_rows(), min_size=1, max_size=2)) * 2
 
     return database
 
@@ -284,10 +295,10 @@ def markups_with_csrf_token(draw):
     """
     Strategy to generate HTML markup containing CSRF tokens.
     """
-    charset = string.ascii_letters + string.digits + "-."
+    alphabet = string.ascii_letters + string.digits + "-."
 
     token = json.dumps(
-        {"csrf": draw(text(alphabet=charset, min_size=1))},
+        {"csrf": draw(text(alphabet=alphabet, min_size=1))},
         separators=(",", ":"),
     )
 

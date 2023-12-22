@@ -8,9 +8,6 @@ from critchecker import database
 from tests.strategies import databases
 
 
-# pylint: disable=no-value-for-parameter
-
-
 @given(databases())
 def test_rows_written_equal_to_database_len_plus_one(data):
     """
