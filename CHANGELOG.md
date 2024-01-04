@@ -7,10 +7,9 @@
  * Bump all dependencies to latest.
 
 ### Removed
- * Support for legacy "Writer" comments, irrelevant since at least 2020.
-
-### Removed
  * Stop fetching deviation artists.
+ * Support for legacy "Writer" comments, irrelevant since at least 2020.
+ * "Edited" timestamp for critiques and all timestamps for blocks, unused since their introduction.
 
 ## 1.0.2 - 2022-12-21
 ### Added

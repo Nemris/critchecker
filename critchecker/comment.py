@@ -94,8 +94,7 @@ class Comment:
     Args:
         data: The JSON representation of a comment.
         url: The URL to the comment.
-        posted_at: The datetime the comment was posted at.
-        edited_at: The datetime the comment was edited at, if any.
+        timestamp: The datetime the comment was posted.
         author: The comment's author.
         body: The comment's body.
         words: The comment's length in words.
@@ -103,8 +102,7 @@ class Comment:
 
     data: dataclasses.InitVar[dict]
     url: URL = None
-    posted_at: str = None
-    edited_at: str | None = None
+    timestamp: str = None
     author: str = None
     body: str = None
     words: int = None
@@ -167,8 +165,7 @@ class Comment:
             self.url = URL(
                 str(data["itemId"]), str(data["typeId"]), str(data["commentId"])
             )
-            self.posted_at = data["posted"]
-            self.edited_at = data["edited"]
+            self.timestamp = data["posted"]
             self.author = data["user"]["username"]
             self.body = self._assemble_body(data)
             self.words = self._get_length(data)

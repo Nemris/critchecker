@@ -6,39 +6,23 @@ import typing
 
 
 @dataclasses.dataclass
-class Row:  # pylint: disable=too-many-instance-attributes
+class Row:
     """
     A single row in a Critmas report.
 
     Args:
-        crit_posted_at: The critique's timestamp.
-        crit_edited_at: The critique's edited timestamp, if any.
+        crit_tstamp: The critique's timestamp.
         crit_author: The critique's author.
-        deviation_artist: The author of the critiqued deviation.
         crit_words: Thw critique's length in words.
-        block_posted_at: The critique block's timestamp.
-        block_edited_at: The critique block's edited timestamp, if any.
         crit_url: The critique's URL.
         block_url: The critique block's URL.
     """
 
-    crit_posted_at: str = None
-    crit_edited_at: typing.Optional[str] = None
+    crit_tstamp: str = None
     crit_author: str = None
-    crit_words: int = 0
-    block_posted_at: str = None
-    block_edited_at: typing.Optional[str] = None
+    crit_words: int = None
     crit_url: str = None
     block_url: str = None
-
-    def __post_init__(self) -> None:
-        """
-        Convert the instance attributes expected to be int.
-
-        Raises:
-            ValueError: If converting to int fails.
-        """
-        self.crit_words = int(self.crit_words)
 
 
 def dump(database: list[Row], outfile: typing.TextIO) -> int:
@@ -100,7 +84,7 @@ def measure_stats(data: list[Row]) -> tuple[int, int, int]:
     """
     try:
         # Let's use a generator to avoid copying the whole database.
-        deleted = sum((True for row in data if row.crit_words == 0))
+        deleted = sum((True for row in data if not row.crit_words))
     except AttributeError as exc:
         raise ValueError("invalid database") from exc
 

@@ -110,8 +110,6 @@ def initialize_database(blocks: list[comment.Comment]) -> list[database.Row]:
 
             data.append(
                 database.Row(
-                    block_posted_at=block.posted_at,
-                    block_edited_at=block.edited_at,
                     crit_url=str(crit_url),
                     block_url=str(block.url),
                 )
@@ -175,8 +173,7 @@ async def fill_row(row: database.Row, da_client: client.Client) -> database.Row:
         # Probably a hidden critique - skip filling critique metadata.
         return row
 
-    row.crit_posted_at = critique.posted_at
-    row.crit_edited_at = critique.edited_at
+    row.crit_tstamp = critique.timestamp
     row.crit_author = critique.author
     row.crit_words = critique.words
 

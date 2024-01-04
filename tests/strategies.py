@@ -8,7 +8,6 @@ from hypothesis.strategies import composite
 from hypothesis.strategies import datetimes
 from hypothesis.strategies import integers
 from hypothesis.strategies import lists
-from hypothesis.strategies import none
 from hypothesis.strategies import text
 
 
@@ -195,7 +194,6 @@ def comments(draw):
         "typeId": draw(ids()),
         "itemId": draw(ids()),
         "posted": draw(timestamps()),
-        "edited": draw(none() | timestamps()),
         "user": {"username": draw(usernames())},
         "textContent": {
             "html": {
@@ -264,12 +262,9 @@ def database_rows(draw):
     Strategy to generate database rows.
     """
     row = {
-        "crit_posted_at": draw(timestamps()),
-        "crit_edited_at": draw(none() | timestamps()),
+        "crit_tstamp": draw(timestamps()),
         "crit_author": draw(usernames()),
         "crit_words": draw(integers()),
-        "block_posted_at": draw(timestamps()),
-        "block_edited_at": draw(none() | timestamps()),
         "crit_url": draw(comment_urls()),
         "block_url": draw(comment_urls()),
     }
