@@ -177,11 +177,11 @@ class Comment:
         Extract the unique comment URLs contained in this comment.
 
         Returns:
-            The unique comment URLs, in the same order as in the text.
+            The unique comment URLs.
         """
         return [
             URL(ids[1], ids[0], ids[2])
-            for ids in list(dict.fromkeys(COMMENT_URL_PATTERN.findall(self.body)))
+            for ids in set(COMMENT_URL_PATTERN.findall(self.body))
         ]
 
 
