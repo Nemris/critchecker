@@ -158,8 +158,7 @@ class Comment:
             InvalidCommentTypeError: If the comment type is not supported.
             BadCommentError: If the JSON data is invalid.
         """
-        kind = data["textContent"]["html"]["type"]
-        if kind != "draft":
+        if (kind := data["textContent"]["html"]["type"]) != "draft":
             raise InvalidCommentTypeError(f"{kind!r}: invalid comment type")
 
         try:
@@ -192,14 +191,14 @@ class CommentPage:
     A page of comments.
 
     Args:
-        commentpage: The dict representation of a comment page, as
+        page: The dict representation of a comment page, as
             returned by the DA Eclipse API.
         has_more: Whether a following comment page exists.
         next_offset: The offset of the next comment page, if any.
         comments: The comments contained in the page.
     """
 
-    commentpage: dataclasses.InitVar[dict]
+    page: dataclasses.InitVar[dict]
     has_more: bool = None
     next_offset: int = None
     comments: list[Comment] = None
@@ -230,12 +229,12 @@ class CommentPage:
 
         return comments
 
-    def __post_init__(self, commentpage: dict) -> None:
+    def __post_init__(self, page: dict) -> None:
         """
-        Initialize the instance attributes by parsing commentpage.
+        Initialize the instance attributes by parsing page.
 
         Args:
-            commentpage: The dict representation of a comment page, as
+            page: The dict representation of a comment page, as
                 returned by the DA Eclipse API.
 
         Raises:
@@ -243,9 +242,9 @@ class CommentPage:
                 comment or instantiating a Comment fails.
         """
         try:
-            self.has_more = commentpage["hasMore"]
-            self.next_offset = commentpage["nextOffset"]
-            thread = commentpage["thread"]
+            self.has_more = page["hasMore"]
+            self.next_offset = page["nextOffset"]
+            thread = page["thread"]
         except KeyError as exc:
             raise BadCommentPageError("malformed comment page data") from exc
 
@@ -288,11 +287,11 @@ async def fetch_page(
     }
 
     try:
-        commentpage = await da_client.query_api(api_url, params)
+        page = await da_client.query_api(api_url, params)
     except client.ClientError as exc:
         raise CommentPageFetchingError(exc) from exc
 
-    return CommentPage(commentpage)
+    return CommentPage(page)
 
 
 async def fetch_pages(
@@ -321,16 +320,12 @@ async def fetch_pages(
             comment page data.
     """
     offset = 0
-    while True:
-        # Let exceptions bubble up.
-        commentpage = await fetch_page(deviation_id, type_id, depth, offset, da_client)
+    while page := await fetch_page(deviation_id, type_id, depth, offset, da_client):
+        yield page
 
-        yield commentpage
-
-        if not commentpage.has_more:
+        if not page.has_more:
             break
-
-        offset = commentpage.next_offset
+        offset = page.next_offset
 
 
 async def fetch(url: str, da_client: client.Client) -> Comment:
@@ -350,12 +345,11 @@ async def fetch(url: str, da_client: client.Client) -> Comment:
     """
     url = URL.from_str(url)
 
-    # Let exceptions bubble up.
     depth = 0
-    async for commentpage in fetch_pages(
+    async for page in fetch_pages(
         url.deviation_id, url.deviation_type, depth, da_client
     ):
-        for comment in commentpage.comments:
+        for comment in page.comments:
             if comment.url == url:
                 return comment
 
