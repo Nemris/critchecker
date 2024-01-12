@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import dataclasses
+import datetime
 import json
 import re
 
@@ -94,7 +95,7 @@ class Comment:
     Args:
         data: The JSON representation of a comment.
         url: The URL to the comment.
-        timestamp: The datetime the comment was posted.
+        timestamp: The date and time the comment was posted.
         author: The comment's author.
         body: The comment's body.
         words: The comment's length in words.
@@ -102,7 +103,7 @@ class Comment:
 
     data: dataclasses.InitVar[dict]
     url: URL = None
-    timestamp: str = None
+    timestamp: datetime.datetime = None
     author: str = None
     body: str = None
     words: int = None
@@ -165,11 +166,11 @@ class Comment:
             self.url = URL(
                 str(data["itemId"]), str(data["typeId"]), str(data["commentId"])
             )
-            self.timestamp = data["posted"]
+            self.timestamp = datetime.datetime.fromisoformat(data["posted"])
             self.author = data["user"]["username"]
             self.body = self._assemble_body(data)
             self.words = self._get_length(data)
-        except KeyError as exc:
+        except (KeyError, ValueError) as exc:
             raise BadCommentError("invalid comment data") from exc
 
     def get_unique_comment_urls(self) -> list[URL]:

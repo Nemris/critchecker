@@ -173,7 +173,7 @@ async def fill_row(row: database.Row, da_client: client.Client) -> database.Row:
         # Probably a hidden critique - skip filling critique metadata.
         return row
 
-    row.crit_tstamp = critique.timestamp
+    row.crit_tstamp = critique.timestamp.strftime("%Y-%m-%dT%H:%M:%S%z")
     row.crit_author = critique.author
     row.crit_words = critique.words
 
