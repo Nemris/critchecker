@@ -39,7 +39,7 @@ class BadCommentPageError(CommentError):
     """The API returned malformed comment page data."""
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(frozen=True)
 class URL:
     """
     A URL to a comment.
