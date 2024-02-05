@@ -46,28 +46,6 @@ def dump(database: list[Row], outfile: typing.TextIO) -> int:
     return len(database) + 1
 
 
-def get_index_by_crit_url(url: str, data: list[Row]) -> int:
-    """
-    Find the index of a database row with a matching crit_url.
-
-    Args:
-        url: The crit_url to look for.
-        data: The database to parse.
-
-    Returns:
-        The index of the row whose crit_url attribute matches url.
-
-    Raises:
-        ValueError: If no matching row is found.
-    """
-    try:
-        index = next(index for index, row in enumerate(data) if row.crit_url == url)
-    except StopIteration as exc:
-        raise ValueError(f"'{url}' not found in database rows") from exc
-
-    return index
-
-
 def measure_stats(data: list[Row]) -> tuple[int, int, int]:
     """
     Obtain the total, valid and deleted critiques from a database.

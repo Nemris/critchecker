@@ -23,20 +23,6 @@ def test_rows_written_equal_to_database_len_plus_one(data):
 
 
 @given(databases())
-def test_finding_index_finds_first_row_with_same_crit_url(data):
-    """
-    Test that finding an index in a database finds the first row with a
-    specific crit_url, irrespective of the other instance attributes.
-    """
-    data = [database.Row(**row) for row in data]
-
-    url = data[-1].crit_url
-    result = database.get_index_by_crit_url(url, data)
-
-    assert data[result].crit_url == url
-
-
-@given(databases())
 def test_total_crits_equals_valid_plus_deleted(data):
     """
     Test that the amount of total critiques in a database equals the

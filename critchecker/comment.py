@@ -19,10 +19,6 @@ class CommentError(Exception):
     """Common base class for exceptions related to comments."""
 
 
-class NoSuchCommentError(CommentError):
-    """The requested comment does not exist."""
-
-
 class CommentPageFetchingError(CommentError):
     """An error occurred while fetching comment page data."""
 
@@ -326,32 +322,3 @@ async def fetch_pages(
         if not page.has_more:
             break
         offset = page.next_offset
-
-
-async def fetch(url: str, da_client: client.Client) -> Comment:
-    """
-    Asynchronously fetch a single comment to a deviation.
-
-    Args:
-        url: The URL to a comment.
-        da_client: A client that interfaces with DeviantArt.
-
-    Returns:
-        A single comment.
-
-    Raises:
-        BadCommentPageError: If instantiating the CommentPage fails.
-        NoSuchCommentError: If the requested comment is not found.
-    """
-    url = URL.from_str(url)
-
-    depth = 0
-    async for page in fetch_pages(
-        url.deviation_id, url.deviation_type, depth, da_client
-    ):
-        for comment in page.comments:
-            if comment.url == url:
-                return comment
-
-    # Reaching this point means no matching comment was found.
-    raise NoSuchCommentError(f"'{url}': comment not found")
