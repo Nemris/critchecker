@@ -2,6 +2,8 @@
 
 import argparse
 import asyncio
+import datetime
+import itertools
 import pathlib
 import sys
 import warnings
@@ -9,6 +11,7 @@ import warnings
 from bs4 import MarkupResemblesLocatorWarning
 import tqdm.asyncio
 
+from critchecker import cache
 from critchecker import client
 from critchecker import comment
 from critchecker import database
@@ -30,6 +33,11 @@ def read_args() -> argparse.Namespace:
         "journal",
         type=str,
         help="the URL of the Critmas launch journal",
+    )
+    parser.add_argument(
+        "startdate",
+        type=str,
+        help="the Critmas start date, in the format YYYY-MM-DD",
     )
     parser.add_argument(
         "-r",
@@ -71,15 +79,17 @@ async def fetch_blocks(
         comment.CommentError: If an error occurred while fetching the
             critique blocks.
     """
+    # Fetch only top-level comments.
     depth = 0
 
-    blocks = []
-    progress_bar = tqdm.asyncio.tqdm(
+    pbar = tqdm.asyncio.tqdm(
         comment.fetch_pages(journal.id, journal.type_id, depth, da_client),
-        desc="Analyzing comment pages",
+        desc="Fetching journal comment pages",
         unit="page",
     )
-    async for page in progress_bar:
+
+    blocks = []
+    async for page in pbar:
         for block in page.comments:
             if block.get_unique_comment_urls():
                 blocks.append(block)
@@ -87,133 +97,117 @@ async def fetch_blocks(
     return blocks
 
 
-def initialize_database(blocks: list[comment.Comment]) -> list[database.Row]:
+def get_unique_deviations(
+    blocks: list[comment.Comment], ignored_ids: set[str]
+) -> set[str]:
     """
-    Initialize the critique database with the blocks' available data.
+    Get the unique deviations referenced by critiques.
 
     Args:
-        blocks: The blocks containing critique links.
+        blocks: Critique blocks to examine.
+        ignored_ids: Deviation IDs to ignore.
 
     Returns:
-        The critique database populated with the available block data,
-            without duplicate critiques.
+        The unique IDs of the deviations referenced by critiques.
     """
-    data = []
-    for block in blocks:
-        for crit_url in block.get_unique_comment_urls():
-            try:
-                database.get_index_by_crit_url(str(crit_url), data)
-                continue
-            except ValueError:
-                # No duplicate critiques, fall-through.
-                pass
-
-            data.append(
-                database.Row(
-                    crit_url=str(crit_url),
-                    block_url=str(block.url),
-                )
-            )
-
-    return data
+    return {
+        url.deviation_id
+        for block in blocks
+        for url in block.get_unique_comment_urls()
+        if url.deviation_id not in ignored_ids
+    }
 
 
-def filter_database(data: list[database.Row], deviation_id: int) -> list[database.Row]:
+async def fetch_comments(
+    deviation_id: str, min_date: datetime.datetime, da_client: client.Client
+) -> list[comment.Comment]:
     """
-    Remove the rows with critiques made to a specific deviation.
+    Fetch comments younger than a specific datetime.
 
     Args:
-        data: The critique database.
-        deviation_id: A deviation ID for which to ignore critiques.
-
-    Returns:
-        The filtered critique database.
-    """
-    return [
-        row
-        for row in data
-        if comment.URL.from_str(row.crit_url).deviation_id != deviation_id
-    ]
-
-
-def get_unique_deviation_ids(data: list[database.Row]) -> set[int]:
-    """
-    Obtain the unique deviation IDs stored in a critique database.
-
-    Args:
-        data: The critique database.
-
-    Returns:
-        The unique deviation IDs in the database.
-
-    Raises:
-        ValueError: If a critique URL is malformed.
-    """
-    return set((comment.URL.from_str(row.crit_url).deviation_id for row in data))
-
-
-async def fill_row(row: database.Row, da_client: client.Client) -> database.Row:
-    """
-    Fetch the critique data belonging to a database row and fill it.
-
-    Args:
-        row: An initialized database row.
+        deviation_id: The deviation whose comments to fetch.
+        min_date: Comments older than this will be ignored.
         da_client: A client that interfaces with DeviantArt.
 
     Returns:
-        The database row with the missing fields filled.
+        The comments to a deviation that are more recent than the
+            specified datetime.
 
     Raises:
         comment.CommentError: If an error occurred while fetching the
-            critique.
+            comments.
     """
-    try:
-        critique = await comment.fetch(row.crit_url, da_client)
-    except comment.NoSuchCommentError:
-        # Probably a hidden critique - skip filling critique metadata.
-        return row
+    # We're interested only in art, and only in top-level comments.
+    dev_type = 1
+    depth = 0
 
-    row.crit_tstamp = critique.timestamp.strftime("%Y-%m-%dT%H:%M:%S%z")
-    row.crit_author = critique.author
-    row.crit_words = critique.words
+    comments = []
+    async for page in comment.fetch_pages(deviation_id, dev_type, depth, da_client):
+        # TODO: fix naming.
+        for comment_ in page.comments:
+            if comment_.timestamp < min_date:
+                return comments
+            comments.append(comment_)
 
-    return row
+    return comments
 
 
-async def fill_database(
-    data: list[database.Row], da_client: client.Client
-) -> list[database.Row]:
+async def cache_comments(
+    deviation_ids: set[str], min_date: datetime.datetime, da_client: client.Client
+) -> cache.Cache:
     """
-    Asynchronously fetch critiques and fill the critique database.
+    Fetch and cache comments to specific deviations.
 
     Args:
-        data: The critique database.
+        deviation_ids: The deviations whose comments to fetch.
+        min_date: Comments older than this will be ignored.
         da_client: A client that interfaces with DeviantArt.
 
     Returns:
-        The filled critique database.
+        A mapping between deviation IDs and their comments.
 
     Raises:
-        comment.CommentError: If an error occurred while fetching a
-            critique.
+        comment.CommentError: If an error occurred while fetching the
+            comments.
     """
-    tasks = [asyncio.create_task(fill_row(row, da_client)) for row in data]
-
-    progress_bar = tqdm.asyncio.tqdm.as_completed(
-        tasks, desc="Fetching critiques", unit="crit"
+    coros = [fetch_comments(dev_id, min_date, da_client) for dev_id in deviation_ids]
+    pbar = tqdm.asyncio.tqdm.gather(
+        *coros, desc="Fetching deviation comments", unit="deviation"
     )
 
-    for task in progress_bar:
-        row = await task
+    # .gather() returns an iterable of results - flatten it.
+    mapping = cache.Cache.from_comments(itertools.chain.from_iterable(await pbar))
 
-        if row in data:
-            continue
+    return mapping
 
-        # Not possible to get exceptions here, so let's not look for
-        # one.
-        index = database.get_index_by_crit_url(row.crit_url, data)
 
-        data[index] = row
+def rows_from_cache(
+    blocks: list[comment.Comment], mapping: cache.Cache
+) -> list[database.Row]:
+    """
+    Prepare database rows from cached comment data.
+
+    Args:
+        blocks: Critique blocks to examine.
+        mapping: A mapping between unique deviations and their
+            comments.
+
+    Returns:
+        A list of rows, enriched with critique metadata if available.
+    """
+    data = []
+    for block in blocks:
+        for url in block.get_unique_comment_urls():
+            row = database.Row(crit_url=str(url), block_url=str(block.url))
+
+            # Enrich row with critique metadata, if available.
+            entry = mapping.find_comment_by_url(url)
+            if entry:
+                row.crit_tstamp = entry.timestamp.strftime("%Y-%m-%dT%H:%M:%S%z")
+                row.crit_author = entry.author
+                row.crit_words = entry.words
+
+            data.append(row)
 
     return data
 
@@ -235,12 +229,15 @@ def save_database(data: list[database.Row], path: pathlib.Path) -> None:
         database.dump(data, outfile)
 
 
-async def main(journal: str, report: pathlib.Path) -> None:
+async def main(
+    journal: str, start_date: datetime.datetime, report: pathlib.Path
+) -> None:
     """
     Core of critchecker.
 
     Args:
         journal: The URL of the Critmas launch journal.
+        start_date: The Critmas start date, in PST time.
         report: The path and filename to save the CSV report as.
     """
     try:
@@ -259,13 +256,13 @@ async def main(journal: str, report: pathlib.Path) -> None:
         except comment.CommentError as exc:
             exit_fatal(f"{exc}.")
 
-        data = initialize_database(blocks)
-        data = filter_database(data, journal.id)
-
+        unique_deviations = get_unique_deviations(blocks, {journal.id})
         try:
-            data = await fill_database(data, da_client)
+            mapping = await cache_comments(unique_deviations, start_date, da_client)
         except comment.CommentError as exc:
             exit_fatal(f"{exc}.")
+
+    data = rows_from_cache(blocks, mapping)
 
     # Cosmetic newline.
     print()
@@ -290,13 +287,20 @@ def wrapper() -> None:
     """
     Entry point for critchecker.
     """
+    args = read_args()
+
+    try:
+        start_date = datetime.datetime.fromisoformat(f"{args.startdate}T00:00:00-0800")
+    except ValueError:
+        exit_fatal(f"{args.startdate!r}: invalid YYYY-MM-DD date.")
+
     # Mute bs4 since it tends to be overzealous.
     warnings.filterwarnings("ignore", category=MarkupResemblesLocatorWarning)
 
     loop = asyncio.get_event_loop()
 
     try:
-        loop.run_until_complete(main(**vars(read_args())))
+        loop.run_until_complete(main(args.journal, start_date, args.report))
     except KeyboardInterrupt:
         # Gracefully abort and let the garbage collector handle the
         # loop.

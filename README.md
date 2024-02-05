@@ -4,8 +4,6 @@ Critchecker is a Python 3.11+ tool that fetches all the critique blocks and
 critiques posted by Critmas participants, counts the critique length, and
 stores the info in a CSV database.
 
-The blocks are sorted by newest, and the critique URL order is preserved.
-
 ## Requirements
 
 To run, `critchecker` needs [beautifulsoup4], [tqdm] and [aiohttp].
@@ -38,11 +36,12 @@ It's possible to display a brief usage message by running:
 critchecker -h
 ```
 
-The only required parameter is the URL of the Critmas launch journal. As such,
-an example invocation will be:
+The required parameters are the URL of the Critmas launch journal and the
+Critmas launch date, in the YYYY-MM-DD format. As such, an example invocation
+will be:
 
 ```bash
-critchecker "https://www.deviantart.com/neurotype/journal/Critmas-2020-HERE-WE-GO-864966965"
+critchecker https://www.deviantart.com/beckykidus/journal/Critmas-2023-We-re-off-1005330829 2023-12-26
 ```
 
 ### The CSV file path
@@ -50,13 +49,11 @@ critchecker "https://www.deviantart.com/neurotype/journal/Critmas-2020-HERE-WE-G
 It's possible to force a specific path to be used in place of the default one
 for the CSV file.
 For example, to save the critique database in a file called `report.csv` in the
-local directory, use:
+current working directory, use:
 
 ```bash
-critchecker -r "./report.csv" <url>
+critchecker -r "./report.csv" <url> <startdate>
 ```
-
-As usual, replace `<url>` with the actual Critmas launch journal URL.
 
 The default location for the CSV file will be either `$HOME/critmas.csv` or
 `C:\Users\<username>\critmas.csv`, depending on your OS of choice.
@@ -98,7 +95,7 @@ and thus executable with:
 poetry run critchecker
 ```
 
-Remember to **create a branch for every change** you want to implement or
+Remember to **create a branch for every feature** you want to implement or
 modify.
 
 ### Code style

@@ -1,6 +1,9 @@
 # Changelog
 
 ## Unreleased
+### Added
+ * Introduce a comment cache to reduce the amount of requests.
+
 ### Changed
  * Stop post-processing timestamps.
  * Bump minimum Python version to 3.11.
