@@ -2,17 +2,17 @@
 
 import argparse
 import asyncio
-import datetime
+from datetime import datetime
 import itertools
 import pathlib
 import sys
 import warnings
 
 from bs4 import MarkupResemblesLocatorWarning
-import tqdm.asyncio
+from tqdm.asyncio import tqdm
 
-from critchecker import cache
-from critchecker import client
+from critchecker.cache import Cache
+from critchecker.client import Client, ClientError
 from critchecker import comment
 from critchecker import database
 from critchecker import deviation
@@ -61,7 +61,7 @@ def exit_fatal(msg: str) -> None:
 
 
 async def fetch_blocks(
-    journal: deviation.Deviation, da_client: client.Client
+    journal: deviation.Deviation, client: Client
 ) -> list[comment.Comment]:
     """
     Fetch the critique blocks posted as comments to a launch journal.
@@ -70,7 +70,7 @@ async def fetch_blocks(
 
     Args:
         journal: The launch journal.
-        da_client: A client that interfaces with DeviantArt.
+        client: A client that interfaces with DeviantArt.
 
     Returns:
         The comments containing at least one link to another comment.
@@ -82,8 +82,8 @@ async def fetch_blocks(
     # Fetch only top-level comments.
     depth = 0
 
-    pbar = tqdm.asyncio.tqdm(
-        comment.fetch_pages(journal.id, journal.type_id, depth, da_client),
+    pbar = tqdm(
+        comment.fetch_pages(journal.id, journal.type_id, depth, client),
         desc="Fetching journal comment pages",
         unit="page",
     )
@@ -119,7 +119,7 @@ def get_unique_deviations(
 
 
 async def fetch_comments(
-    deviation_id: str, min_date: datetime.datetime, da_client: client.Client
+    deviation_id: str, min_date: datetime, client: Client
 ) -> list[comment.Comment]:
     """
     Fetch comments younger than a specific datetime.
@@ -127,7 +127,7 @@ async def fetch_comments(
     Args:
         deviation_id: The deviation whose comments to fetch.
         min_date: Comments older than this will be ignored.
-        da_client: A client that interfaces with DeviantArt.
+        client: A client that interfaces with DeviantArt.
 
     Returns:
         The comments to a deviation that are more recent than the
@@ -142,7 +142,7 @@ async def fetch_comments(
     depth = 0
 
     comments = []
-    async for page in comment.fetch_pages(deviation_id, dev_type, depth, da_client):
+    async for page in comment.fetch_pages(deviation_id, dev_type, depth, client):
         # TODO: fix naming.
         for comment_ in page.comments:
             if comment_.timestamp < min_date:
@@ -153,44 +153,39 @@ async def fetch_comments(
 
 
 async def cache_comments(
-    deviation_ids: set[str], min_date: datetime.datetime, da_client: client.Client
-) -> cache.Cache:
+    deviation_ids: set[str], min_date: datetime, client: Client
+) -> Cache:
     """
     Fetch and cache comments to specific deviations.
 
     Args:
         deviation_ids: The deviations whose comments to fetch.
         min_date: Comments older than this will be ignored.
-        da_client: A client that interfaces with DeviantArt.
+        client: A client that interfaces with DeviantArt.
 
     Returns:
-        A mapping between deviation IDs and their comments.
+        A cache of comments to deviations.
 
     Raises:
         comment.CommentError: If an error occurred while fetching the
             comments.
     """
-    coros = [fetch_comments(dev_id, min_date, da_client) for dev_id in deviation_ids]
-    pbar = tqdm.asyncio.tqdm.gather(
-        *coros, desc="Fetching deviation comments", unit="deviation"
-    )
+    coros = [fetch_comments(dev_id, min_date, client) for dev_id in deviation_ids]
+    pbar = tqdm.gather(*coros, desc="Fetching deviation comments", unit="deviation")
 
     # .gather() returns an iterable of results - flatten it.
-    mapping = cache.Cache.from_comments(itertools.chain.from_iterable(await pbar))
+    cache = Cache.from_comments(itertools.chain.from_iterable(await pbar))
 
-    return mapping
+    return cache
 
 
-def rows_from_cache(
-    blocks: list[comment.Comment], mapping: cache.Cache
-) -> list[database.Row]:
+def rows_from_cache(blocks: list[comment.Comment], cache: Cache) -> list[database.Row]:
     """
     Prepare database rows from cached comment data.
 
     Args:
         blocks: Critique blocks to examine.
-        mapping: A mapping between unique deviations and their
-            comments.
+        cache: A cache of comments to deviations.
 
     Returns:
         A list of rows, enriched with critique metadata if available.
@@ -201,7 +196,7 @@ def rows_from_cache(
             row = database.Row(crit_url=str(url), block_url=str(block.url))
 
             # Enrich row with critique metadata, if available.
-            entry = mapping.find_comment_by_url(url)
+            entry = cache.find_comment_by_url(url)
             if entry:
                 row.crit_tstamp = entry.timestamp.strftime("%Y-%m-%dT%H:%M:%S%z")
                 row.crit_author = entry.author
@@ -229,9 +224,7 @@ def save_database(data: list[database.Row], path: pathlib.Path) -> None:
         database.dump(data, outfile)
 
 
-async def main(
-    journal: str, start_date: datetime.datetime, report: pathlib.Path
-) -> None:
+async def main(journal: str, start_date: datetime, report: pathlib.Path) -> None:
     """
     Core of critchecker.
 
@@ -246,23 +239,23 @@ async def main(
         exit_fatal(f"{exc}.")
 
     try:
-        da_client = await client.Client.new()
-    except client.ClientError as exc:
+        client = await Client.new()
+    except ClientError as exc:
         exit_fatal(f"{exc}.")
 
-    async with da_client:
+    async with client:
         try:
-            blocks = await fetch_blocks(journal, da_client)
+            blocks = await fetch_blocks(journal, client)
         except comment.CommentError as exc:
             exit_fatal(f"{exc}.")
 
         unique_deviations = get_unique_deviations(blocks, {journal.id})
         try:
-            mapping = await cache_comments(unique_deviations, start_date, da_client)
+            cache = await cache_comments(unique_deviations, start_date, client)
         except comment.CommentError as exc:
             exit_fatal(f"{exc}.")
 
-    data = rows_from_cache(blocks, mapping)
+    data = rows_from_cache(blocks, cache)
 
     # Cosmetic newline.
     print()
@@ -290,7 +283,7 @@ def wrapper() -> None:
     args = read_args()
 
     try:
-        start_date = datetime.datetime.fromisoformat(f"{args.startdate}T00:00:00-0800")
+        start_date = datetime.fromisoformat(f"{args.startdate}T00:00:00-0800")
     except ValueError:
         exit_fatal(f"{args.startdate!r}: invalid YYYY-MM-DD date.")
 

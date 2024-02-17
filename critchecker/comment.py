@@ -3,11 +3,11 @@
 from __future__ import annotations
 
 import dataclasses
-import datetime
+from datetime import datetime
 import json
 import re
 
-from critchecker import client
+from critchecker.client import Client, ClientError
 
 
 COMMENT_URL_PATTERN = re.compile(
@@ -99,7 +99,7 @@ class Comment:
 
     data: dataclasses.InitVar[dict]
     url: URL = None
-    timestamp: datetime.datetime = None
+    timestamp: datetime = None
     author: str = None
     body: str = None
     words: int = None
@@ -161,7 +161,7 @@ class Comment:
             self.url = URL(
                 str(data["itemId"]), str(data["typeId"]), str(data["commentId"])
             )
-            self.timestamp = datetime.datetime.fromisoformat(data["posted"])
+            self.timestamp = datetime.fromisoformat(data["posted"])
             self.author = data["user"]["username"]
             self.body = self._assemble_body(data)
             self.words = self._get_length(data)
@@ -248,7 +248,7 @@ class CommentPage:
 
 
 async def fetch_page(
-    deviation_id: int, type_id: int, depth: int, offset: int, da_client: client.Client
+    deviation_id: int, type_id: int, depth: int, offset: int, client: Client
 ) -> CommentPage:
     """
     Asynchronously fetch a page of comments to a deviation.
@@ -262,7 +262,7 @@ async def fetch_page(
         depth: The amount of allowed replies to a comment. A depth of
             zero returns only the topmost comments.
         offset: The starting offset of the comment page.
-        da_client: A client that interfaces with DeviantArt.
+        client: A client that interfaces with DeviantArt.
 
     Returns:
         A page of comments.
@@ -283,15 +283,15 @@ async def fetch_page(
     }
 
     try:
-        page = await da_client.query_api(api_url, params)
-    except client.ClientError as exc:
+        page = await client.query_api(api_url, params)
+    except ClientError as exc:
         raise CommentPageFetchingError(exc) from exc
 
     return CommentPage(page)
 
 
 async def fetch_pages(
-    deviation_id: int, type_id: int, depth: int, da_client: client.Client
+    deviation_id: int, type_id: int, depth: int, client: Client
 ) -> CommentPage:
     """
     Asynchronously fetch all the pages of comments to a deviation.
@@ -305,7 +305,7 @@ async def fetch_pages(
         type_id: The parent deviation's type ID.
         depth: The amount of allowed replies to a comment. A depth of
             zero returns only the topmost comments.
-        da_client: A client that interfaces with DeviantArt.
+        client: A client that interfaces with DeviantArt.
 
     Yields:
         The next comment page.
@@ -316,7 +316,7 @@ async def fetch_pages(
             comment page data.
     """
     offset = 0
-    while page := await fetch_page(deviation_id, type_id, depth, offset, da_client):
+    while page := await fetch_page(deviation_id, type_id, depth, offset, client):
         yield page
 
         if not page.has_more:

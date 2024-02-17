@@ -3,7 +3,7 @@
 from hypothesis import given
 import pytest
 
-from critchecker import comment
+from critchecker.comment import Comment, CommentPage, InvalidCommentTypeError, URL
 from tests.strategies import comment_pages
 from tests.strategies import comment_urls
 from tests.strategies import comments
@@ -12,23 +12,23 @@ from tests.strategies import random_urls
 
 
 @given(invalid_comments() | comments())
-def test_comment_instantiation_succeeds_only_for_draft_type(comment_):
+def test_comment_instantiation_succeeds_only_for_draft_type(comment):
     """
-    Test that a comment.Comment accepts Draft comments and not others.
+    Test that a Comment accepts Draft comments and not others.
     """
-    if comment_["textContent"]["html"]["type"] == "draft":
-        comment.Comment(comment_)
+    if comment["textContent"]["html"]["type"] == "draft":
+        Comment(comment)
     else:
-        with pytest.raises(comment.InvalidCommentTypeError):
-            comment.Comment(comment_)
+        with pytest.raises(InvalidCommentTypeError):
+            Comment(comment)
 
 
 @given(comments())
-def test_extracted_comment_urls_are_unique(comment_):
+def test_extracted_comment_urls_are_unique(comment):
     """
     Test that the comment URLs extracted from a comment are unique.
     """
-    urls = comment.Comment(comment_).get_unique_comment_urls()
+    urls = Comment(comment).get_unique_comment_urls()
 
     assert all(urls.count(url) == 1 for url in urls)
 
@@ -46,7 +46,7 @@ def test_commentpage_contains_only_draft_comments(comment_page):
         ]
     )
 
-    result = comment.CommentPage(comment_page)
+    result = CommentPage(comment_page)
 
     assert len(result.comments) == expected
 
@@ -54,10 +54,10 @@ def test_commentpage_contains_only_draft_comments(comment_page):
 @given(comment_urls() | random_urls())
 def test_url_instantiation_succeds_only_for_valid_urls(url):
     """
-    Test that a comment.URL accepts only valid comment URLs.
+    Test that a URL accepts only valid comment URLs.
     """
     if "/comments/" in url:
-        comment.URL.from_str(url)
+        URL.from_str(url)
     else:
         with pytest.raises(ValueError):
-            comment.URL.from_str(url)
+            URL.from_str(url)

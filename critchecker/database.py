@@ -2,7 +2,7 @@
 
 import csv
 import dataclasses
-import typing
+from typing import TextIO
 
 
 @dataclasses.dataclass
@@ -25,7 +25,7 @@ class Row:
     block_url: str = None
 
 
-def dump(database: list[Row], outfile: typing.TextIO) -> int:
+def dump(database: list[Row], outfile: TextIO) -> int:
     """
     Dump a Critmas database.
 
