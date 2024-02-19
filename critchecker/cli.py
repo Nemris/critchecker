@@ -86,6 +86,7 @@ async def fetch_blocks(
         comment.fetch_pages(journal.id, journal.type_id, depth, client),
         desc="Fetching journal comment pages",
         unit="page",
+        leave=False,
     )
 
     blocks = []
@@ -171,7 +172,9 @@ async def cache_comments(
             comments.
     """
     coros = [fetch_comments(dev_id, min_date, client) for dev_id in deviation_ids]
-    pbar = tqdm.gather(*coros, desc="Fetching deviation comments", unit="deviation")
+    pbar = tqdm.gather(
+        *coros, desc="Fetching deviation comments", unit="deviation", leave=False
+    )
 
     # .gather() returns an iterable of results - flatten it.
     cache = Cache.from_comments(itertools.chain.from_iterable(await pbar))
@@ -256,10 +259,6 @@ async def main(journal: str, start_date: datetime, report: pathlib.Path) -> None
             exit_fatal(f"{exc}.")
 
     data = rows_from_cache(blocks, cache)
-
-    # Cosmetic newline.
-    print()
-
     try:
         total_crits, valid_crits, deleted_crits = database.measure_stats(data)
     except ValueError as exc:

@@ -9,6 +9,7 @@
  * Bump minimum Python version to 3.11.
  * Bump all dependencies to latest.
  * Stop guaranteeing a specific critique ordering in the CSV.
+ * Hide progress bars after downloading.
 
 ### Removed
  * Stop fetching deviation artists.
