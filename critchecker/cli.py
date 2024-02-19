@@ -171,15 +171,25 @@ async def cache_comments(
         comment.CommentError: If an error occurred while fetching the
             comments.
     """
-    coros = [fetch_comments(dev_id, min_date, client) for dev_id in deviation_ids]
-    pbar = tqdm.gather(
-        *coros, desc="Fetching deviation comments", unit="deviation", leave=False
+    tasks = {
+        asyncio.create_task(fetch_comments(dev_id, min_date, client))
+        for dev_id in deviation_ids
+    }
+    pbar = tqdm.as_completed(
+        tasks, desc="Fetching deviation comments", unit="dev", leave=False
     )
 
-    # .gather() returns an iterable of results - flatten it.
-    cache = Cache.from_comments(itertools.chain.from_iterable(await pbar))
+    comments = []
+    try:
+        for coro in pbar:
+            comments.append(await coro)
+    except asyncio.CancelledError:
+        # Cleanup.
+        for task in tasks:
+            task.cancel()
+        raise
 
-    return cache
+    return Cache.from_comments(itertools.chain.from_iterable(comments))
 
 
 def rows_from_cache(blocks: list[comment.Comment], cache: Cache) -> list[database.Row]:
@@ -289,11 +299,8 @@ def wrapper() -> None:
     # Mute bs4 since it tends to be overzealous.
     warnings.filterwarnings("ignore", category=MarkupResemblesLocatorWarning)
 
-    loop = asyncio.get_event_loop()
-
     try:
-        loop.run_until_complete(main(args.journal, start_date, args.report))
+        asyncio.run(main(args.journal, start_date, args.report))
     except KeyboardInterrupt:
-        # Gracefully abort and let the garbage collector handle the
-        # loop.
-        print("\r\nInterrupted by user.")
+        # Gracefully abort.
+        pass
