@@ -3,6 +3,7 @@
 ## Unreleased
 ### Added
  * Introduce a comment cache to reduce the amount of requests.
+ * Support the new deviation URL scheme.
 
 ### Changed
  * Stop post-processing timestamps.

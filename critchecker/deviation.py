@@ -57,7 +57,7 @@ class Deviation:
     @property
     def id(self) -> int:  # pylint: disable=invalid-name
         """The deviation's ID."""
-        pattern = r"/.+/.+/.+-(\d+)$"
+        pattern = r"/.+/.+/(?:.+-)?(\d+)$"
         return int(self._search_pattern(pattern))
 
     @property

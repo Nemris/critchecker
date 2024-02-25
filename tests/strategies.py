@@ -132,19 +132,17 @@ def deviation_names(draw):
     """
     Strategy to generate DA deviation names.
 
-    Deviation names contain an ASCII string with a trailing hyphen,
-    followed by a numeric ID greater than zero.
+    Deviation names contain a numeric ID greater than zero, optionally
+    preceded by an ASCII string with a trailing hyphen.
     """
     alphabet = string.ascii_letters + string.digits + "-"
 
-    name = "-".join(
-        [
-            draw(text(alphabet=alphabet, min_size=1, max_size=15)),
-            str(draw(ids())),
-        ]
-    )
+    label = draw(text(alphabet=alphabet, max_size=15))
+    dev_id = str(draw(ids()))
 
-    return name
+    if label:
+        return "-".join([label, dev_id])
+    return dev_id
 
 
 @composite
