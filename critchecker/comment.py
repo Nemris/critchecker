@@ -118,8 +118,20 @@ class Comment:
         Raises:
             KeyError: If the JSON data is invalid.
         """
-        blocks = json.loads(data["textContent"]["html"]["markup"])["blocks"]
-        return "\n".join([block["text"] for block in blocks])
+        # This naming is terrible, but the JSON itself forces our hand.
+        markup = json.loads(data["textContent"]["html"]["markup"])
+        sections = (
+            section
+            for section in markup["document"]["content"]
+            if section["type"] == "paragraph" and "content" in section
+        )
+        lines = [
+            content["text"]
+            for section in sections
+            for content in section["content"]
+            if content["type"] == "text"
+        ]
+        return "\n".join(lines)
 
     @staticmethod
     def _get_length(data: dict) -> int:
@@ -154,7 +166,7 @@ class Comment:
             InvalidCommentTypeError: If the comment type is not supported.
             BadCommentError: If the JSON data is invalid.
         """
-        if (kind := data["textContent"]["html"]["type"]) != "draft":
+        if (kind := data["textContent"]["html"]["type"]) != "tiptap":
             raise InvalidCommentTypeError(f"{kind!r}: invalid comment type")
 
         try:
@@ -202,13 +214,13 @@ class CommentPage:
     @staticmethod
     def _get_comments(thread: dict) -> list[Comment]:
         """
-        Obtain all comments of type Draft in a thread.
+        Obtain all comments of type Tiptap in a thread.
 
         Args:
             thread: Thread of comments in a page.
 
         Returns:
-            The Draft comments in the thread.
+            The Tiptap comments in the thread.
 
         Raises:
             BadCommentPageError: If any comment is malformed.
@@ -218,7 +230,7 @@ class CommentPage:
             try:
                 comments.append(Comment(comment))
             except InvalidCommentTypeError:
-                # We only expect Draft comments, skip this comment.
+                # We only expect Tiptap comments, skip this comment.
                 pass
             except BadCommentError as exc:
                 raise BadCommentPageError("malformed comment page data") from exc

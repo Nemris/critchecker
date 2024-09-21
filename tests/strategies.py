@@ -195,12 +195,22 @@ def comments(draw):
         "user": {"username": draw(usernames())},
         "textContent": {
             "html": {
-                "type": "draft",
+                "type": "tiptap",
                 "markup": json.dumps(
                     {
-                        "blocks": [
-                            {"text": draw(comment_bodies())},
-                        ]
+                        "document": {
+                            "content": [
+                                {
+                                    "type": "paragraph",
+                                    "content": [
+                                        {
+                                            "type": "text",
+                                            "text": draw(comment_bodies()),
+                                        },
+                                    ],
+                                },
+                            ],
+                        },
                     },
                 ),
                 "features": json.dumps(

@@ -12,11 +12,11 @@ from tests.strategies import random_urls
 
 
 @given(invalid_comments() | comments())
-def test_comment_instantiation_succeeds_only_for_draft_type(comment):
+def test_comment_instantiation_succeeds_only_for_tiptap_type(comment):
     """
-    Test that a Comment accepts Draft comments and not others.
+    Test that a Comment accepts Tiptap comments and not others.
     """
-    if comment["textContent"]["html"]["type"] == "draft":
+    if comment["textContent"]["html"]["type"] == "tiptap":
         Comment(comment)
     else:
         with pytest.raises(InvalidCommentTypeError):
@@ -34,15 +34,15 @@ def test_extracted_comment_urls_are_unique(comment):
 
 
 @given(comment_pages())
-def test_commentpage_contains_only_draft_comments(comment_page):
+def test_commentpage_contains_only_tiptap_comments(comment_page):
     """
-    Test that a comment page ignores non-Draft comments.
+    Test that a comment page ignores non-Tiptap comments.
     """
     expected = len(
         [
             entry
             for entry in comment_page["thread"]
-            if entry["textContent"]["html"]["type"] == "draft"
+            if entry["textContent"]["html"]["type"] == "tiptap"
         ]
     )
 

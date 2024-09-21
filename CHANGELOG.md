@@ -2,6 +2,7 @@
 
 ## Unreleased
 ### Added
+ * Support "Tiptap" comments.
  * Introduce a comment cache to reduce the amount of requests.
  * Support the new deviation URL scheme.
 
