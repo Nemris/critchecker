@@ -8,6 +8,7 @@ from hypothesis.strategies import composite
 from hypothesis.strategies import datetimes
 from hypothesis.strategies import integers
 from hypothesis.strategies import lists
+from hypothesis.strategies import none
 from hypothesis.strategies import text
 
 
@@ -183,6 +184,48 @@ def timestamps(draw):
 
 
 @composite
+def text_contents(draw):
+    """
+    Strategy to generate DA comment contents of type "text".
+    """
+    text_content = {
+        "type": "text",
+        "text": draw(comment_bodies()),
+    }
+
+    return text_content
+
+
+@composite
+def paragraph_contents(draw):
+    """
+    Strategy to generate DA comment contents of type "paragraph".
+    """
+    text_content = draw(none() | text_contents())
+    paragraph = {"type": "paragraph"}
+
+    # There are some edge cases of paragraphs lacking text - let's reproduce them.
+    if text_content:
+        paragraph["content"] = [text_content]
+
+    return paragraph
+
+
+@composite
+def comment_markups(draw):
+    """
+    Strategy to generate DA comment markups.
+    """
+    markup = {
+        "document": {
+            "content": [draw(paragraph_contents())],
+        },
+    }
+
+    return markup
+
+
+@composite
 def comments(draw):
     """
     Strategy to generate DA comment JSONs.
@@ -196,23 +239,7 @@ def comments(draw):
         "textContent": {
             "html": {
                 "type": "tiptap",
-                "markup": json.dumps(
-                    {
-                        "document": {
-                            "content": [
-                                {
-                                    "type": "paragraph",
-                                    "content": [
-                                        {
-                                            "type": "text",
-                                            "text": draw(comment_bodies()),
-                                        },
-                                    ],
-                                },
-                            ],
-                        },
-                    },
-                ),
+                "markup": json.dumps(draw(comment_markups())),
                 "features": json.dumps(
                     [
                         {
