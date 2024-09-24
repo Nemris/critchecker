@@ -13,7 +13,7 @@ class Row:
     Args:
         crit_tstamp: The critique's timestamp.
         crit_author: The critique's author.
-        crit_words: Thw critique's length in words.
+        crit_words: The critique's length in words.
         crit_url: The critique's URL.
         block_url: The critique block's URL.
     """
@@ -25,48 +25,47 @@ class Row:
     block_url: str = None
 
 
-def dump(database: list[Row], outfile: TextIO) -> int:
+@dataclasses.dataclass
+class Database:
     """
-    Dump a Critmas database.
+    A database that stores critique metadata in rows.
 
     Args:
-        database: A list of Critmas database rows.
-        outfile: A .write()-supporting file-like object.
-
-    Returns:
-        The number of written rows.
+        rows: Rows containing critique metadata.
     """
-    header = dataclasses.asdict(database[0]).keys()
-    writer = csv.DictWriter(outfile, header)
 
-    writer.writeheader()
-    for row in database:
-        writer.writerow(dataclasses.asdict(row))
+    rows: list[Row]
 
-    return len(database) + 1
+    def dump(self, outfile: TextIO) -> int:
+        """
+        Dump self to a text stream.
 
+        Args:
+            outfile: A text stream that supports .write().
 
-def measure_stats(data: list[Row]) -> tuple[int, int, int]:
-    """
-    Obtain the total, valid and deleted critiques from a database.
+        Returns:
+            The number of written rows.
+        """
+        header = dataclasses.asdict(self.rows[0]).keys()
+        writer = csv.DictWriter(outfile, header)
 
-    Args:
-        data: The database to parse.
+        writer.writeheader()
+        for row in self.rows:
+            writer.writerow(dataclasses.asdict(row))
 
-    Returns:
-        A tuple containing the amount of total, valid and deleted
-            critiques.
+        return len(self.rows) + 1
 
-    Raises:
-        ValueError: If the database contains invalid rows.
-    """
-    try:
-        # Let's use a generator to avoid copying the whole database.
-        deleted = sum((True for row in data if not row.crit_words))
-    except AttributeError as exc:
-        raise ValueError("invalid database") from exc
+    @property
+    def total_critiques(self) -> int:
+        """Total amount of critiques in the database."""
+        return len(self.rows)
 
-    total = len(data)
-    valid = total - deleted
+    @property
+    def valid_critiques(self) -> int:
+        """Valid critiques in the database."""
+        return sum(True for row in self.rows if row.crit_words)
 
-    return total, valid, deleted
+    @property
+    def deleted_critiques(self) -> int:
+        """Deleted critiques in the database."""
+        return self.total_critiques - self.valid_critiques

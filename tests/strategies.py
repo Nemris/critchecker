@@ -297,27 +297,14 @@ def database_rows(draw):
     Strategy to generate database rows.
     """
     row = {
-        "crit_tstamp": draw(timestamps()),
-        "crit_author": draw(usernames()),
-        "crit_words": draw(integers()),
+        "crit_tstamp": draw(none() | timestamps()),
+        "crit_author": draw(none() | usernames()),
+        "crit_words": draw(none() | integers()),
         "crit_url": draw(comment_urls()),
         "block_url": draw(comment_urls()),
     }
 
     return row
-
-
-@composite
-def databases(draw):
-    """
-    Strategy to generate databases.
-
-    Databases are lists of rows.
-    """
-    # Artificially duplicate data for some tests.
-    database = draw(lists(database_rows(), min_size=1, max_size=2)) * 2
-
-    return database
 
 
 @composite

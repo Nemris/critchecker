@@ -192,16 +192,16 @@ async def cache_comments(
     return Cache.from_comments(itertools.chain.from_iterable(comments))
 
 
-def rows_from_cache(blocks: list[comment.Comment], cache: Cache) -> list[database.Row]:
+def populate_database(blocks: list[comment.Comment], cache: Cache) -> database.Database:
     """
-    Prepare database rows from cached comment data.
+    Prepare a Database from cached comment data.
 
     Args:
         blocks: Critique blocks to examine.
         cache: A cache of comments to deviations.
 
     Returns:
-        A list of rows, enriched with critique metadata if available.
+        A database of critique metadata.
     """
     data = []
     for block in blocks:
@@ -217,24 +217,7 @@ def rows_from_cache(blocks: list[comment.Comment], cache: Cache) -> list[databas
 
             data.append(row)
 
-    return data
-
-
-def save_database(data: list[database.Row], path: pathlib.Path) -> None:
-    """
-    Save a list of rows to a critchecker CSV database.
-
-    An existing CSV database will be overwritten.
-
-    Args:
-        data: The data to save.
-        path: The path to a critchecker CSV database.
-
-    Raises:
-        OSError: If an error happens while writing the CSV database.
-    """
-    with path.open("w", newline="") as outfile:
-        database.dump(data, outfile)
+    return database.Database(data)
 
 
 async def main(journal: str, start_date: datetime, report: pathlib.Path) -> None:
@@ -268,19 +251,14 @@ async def main(journal: str, start_date: datetime, report: pathlib.Path) -> None
         except comment.CommentError as exc:
             exit_fatal(f"{exc}.")
 
-    data = rows_from_cache(blocks, cache)
-    try:
-        total_crits, valid_crits, deleted_crits = database.measure_stats(data)
-    except ValueError as exc:
-        # An error at this point means the database is garbage.
-        exit_fatal(f"{exc}.")
-
-    print(f"Total critiques:   {total_crits:>4}")
-    print(f"Valid critiques:   {valid_crits:>4}")
-    print(f"Deleted critiques: {deleted_crits:>4}")
+    data = populate_database(blocks, cache)
+    print(f"Total critiques:   {data.total_critiques:>4}")
+    print(f"Valid critiques:   {data.valid_critiques:>4}")
+    print(f"Deleted critiques: {data.deleted_critiques:>4}")
 
     try:
-        save_database(data, report)
+        with report.open("w", newline="") as outfile:
+            data.dump(outfile)
     except OSError as exc:
         exit_fatal(f"{exc}.")
 
