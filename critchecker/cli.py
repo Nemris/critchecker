@@ -79,9 +79,10 @@ async def fetch_blocks(journal: Deviation, client: Client) -> list[comment.Comme
     """
     # Fetch only top-level comments.
     depth = 0
+    offset = 0
 
     pbar = tqdm(
-        comment.fetch_pages(journal.id, journal.type_id, depth, client),
+        comment.fetch_pages(journal.id, journal.type_id, depth, offset, client),
         desc="Fetching journal comment pages",
         unit="page",
         leave=False,
@@ -139,9 +140,10 @@ async def fetch_comments(
     # We're interested only in art, and only in top-level comments.
     dev_type = 1
     depth = 0
+    offset = 0
 
     comments = []
-    async for page in comment.fetch_pages(deviation_id, dev_type, depth, client):
+    async for page in comment.fetch_pages(deviation_id, dev_type, depth, offset, client):
         # TODO: fix naming.
         for comment_ in page.comments:
             if comment_.timestamp < min_date:

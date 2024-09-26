@@ -259,11 +259,11 @@ class CommentPage:
         self.comments = self._get_comments(thread)
 
 
-async def fetch_page(
-    deviation_id: int, type_id: int, depth: int, offset: int, client: Client
+async def fetch_pages(
+        deviation_id: int, type_id: int, depth: int, offset: int, client: Client
 ) -> CommentPage:
     """
-    Asynchronously fetch a page of comments to a deviation.
+    Asynchronously fetch all the pages of comments to a deviation.
 
     The comments are ordered from newest to oldest, and a page's
     maximum size is 50 comments.
@@ -273,11 +273,11 @@ async def fetch_page(
         type_id: The parent deviation's type ID.
         depth: The amount of allowed replies to a comment. A depth of
             zero returns only the topmost comments.
-        offset: The starting offset of the comment page.
+        offset: The offset of the first comment page.
         client: A client that interfaces with DeviantArt.
 
-    Returns:
-        A page of comments.
+    Yields:
+        The next comment page.
 
     Raises:
         BadCommentPageError: If instantiating the CommentPage fails.
@@ -295,42 +295,11 @@ async def fetch_page(
     }
 
     try:
-        page = await client.query_api(api_url, params)
+        while page := CommentPage(await client.query_api(api_url, params)):
+            yield page
+
+            if not page.has_more:
+                break
+            params["offset"] = page.next_offset
     except ClientError as exc:
         raise CommentPageFetchingError(exc) from exc
-
-    return CommentPage(page)
-
-
-async def fetch_pages(
-    deviation_id: int, type_id: int, depth: int, client: Client
-) -> CommentPage:
-    """
-    Asynchronously fetch all the pages of comments to a deviation.
-
-    Unfortunately, fetching a comment page depends on knowing the next
-    offset, so there's currently no way to fetch more pages in
-    parallel.
-
-    Args:
-        deviation_id: The parent deviation's ID.
-        type_id: The parent deviation's type ID.
-        depth: The amount of allowed replies to a comment. A depth of
-            zero returns only the topmost comments.
-        client: A client that interfaces with DeviantArt.
-
-    Yields:
-        The next comment page.
-
-    Raises:
-        BadCommentPageError: If instantiating the CommentPage fails.
-        CommentPageFetchingError: If an error occurs while fetching
-            comment page data.
-    """
-    offset = 0
-    while page := await fetch_page(deviation_id, type_id, depth, offset, client):
-        yield page
-
-        if not page.has_more:
-            break
-        offset = page.next_offset
