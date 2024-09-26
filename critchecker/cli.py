@@ -143,7 +143,9 @@ async def fetch_comments(
     offset = 0
 
     comments = []
-    async for page in comment.fetch_pages(deviation_id, dev_type, depth, offset, client):
+    async for page in comment.fetch_pages(
+        deviation_id, dev_type, depth, offset, client
+    ):
         # TODO: fix naming.
         for comment_ in page.comments:
             if comment_.timestamp < min_date:

@@ -260,7 +260,7 @@ class CommentPage:
 
 
 async def fetch_pages(
-        deviation_id: int, type_id: int, depth: int, offset: int, client: Client
+    deviation_id: int, type_id: int, depth: int, offset: int, client: Client
 ) -> CommentPage:
     """
     Asynchronously fetch all the pages of comments to a deviation.
