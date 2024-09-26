@@ -14,8 +14,8 @@ from tqdm.asyncio import tqdm
 from critchecker.cache import Cache
 from critchecker.client import Client, ClientError
 from critchecker import comment
-from critchecker import database
-from critchecker import deviation
+from critchecker.database import Database, Row
+from critchecker.deviation import Deviation
 
 
 def read_args() -> argparse.Namespace:
@@ -60,9 +60,7 @@ def exit_fatal(msg: str) -> None:
     sys.exit(f"Fatal: {msg}")
 
 
-async def fetch_blocks(
-    journal: deviation.Deviation, client: Client
-) -> list[comment.Comment]:
+async def fetch_blocks(journal: Deviation, client: Client) -> list[comment.Comment]:
     """
     Fetch the critique blocks posted as comments to a launch journal.
 
@@ -192,7 +190,7 @@ async def cache_comments(
     return Cache.from_comments(itertools.chain.from_iterable(comments))
 
 
-def populate_database(blocks: list[comment.Comment], cache: Cache) -> database.Database:
+def populate_database(blocks: list[comment.Comment], cache: Cache) -> Database:
     """
     Prepare a Database from cached comment data.
 
@@ -206,7 +204,7 @@ def populate_database(blocks: list[comment.Comment], cache: Cache) -> database.D
     data = []
     for block in blocks:
         for url in block.get_unique_comment_urls():
-            row = database.Row(crit_url=str(url), block_url=str(block.url))
+            row = Row(crit_url=str(url), block_url=str(block.url))
 
             # Enrich row with critique metadata, if available.
             entry = cache.find_comment_by_url(url)
@@ -217,7 +215,7 @@ def populate_database(blocks: list[comment.Comment], cache: Cache) -> database.D
 
             data.append(row)
 
-    return database.Database(data)
+    return Database(data)
 
 
 async def main(journal: str, start_date: datetime, report: pathlib.Path) -> None:
@@ -230,7 +228,7 @@ async def main(journal: str, start_date: datetime, report: pathlib.Path) -> None
         report: The path and filename to save the CSV report as.
     """
     try:
-        journal = deviation.Deviation(journal)
+        journal = Deviation(journal)
     except ValueError as exc:
         exit_fatal(f"{exc}.")
 

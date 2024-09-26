@@ -5,7 +5,7 @@ import io
 from hypothesis import given
 from hypothesis.strategies import lists
 
-from critchecker import database
+from critchecker.database import Database, Row
 from tests.strategies import database_rows
 
 
@@ -15,8 +15,8 @@ def test_rows_written_equal_to_database_len_plus_one(rows):
     Test that the number of rows written to a file is equal to
     len(data)+1.
     """
-    rows = [database.Row(**row) for row in rows] * 2
-    data = database.Database(rows)
+    rows = [Row(**row) for row in rows] * 2
+    data = Database(rows)
 
     with io.StringIO(newline="") as stream:
         result = data.dump(stream)
@@ -30,6 +30,6 @@ def test_total_crits_equals_valid_plus_deleted(rows):
     Test that the amount of total critiques in a database equals the
     amount of valid plus deleted ones.
     """
-    data = database.Database([database.Row(**row) for row in rows] * 2)
+    data = Database([Row(**row) for row in rows] * 2)
 
     assert data.total_critiques == data.valid_critiques + data.deleted_critiques
