@@ -232,7 +232,7 @@ async def main(journal: str, start_date: datetime, report: pathlib.Path) -> None
         report: The path and filename to save the CSV report as.
     """
     try:
-        journal = Deviation(journal)
+        journal = Deviation.from_url(journal)
     except ValueError as exc:
         exit_fatal(f"{exc}.")
 

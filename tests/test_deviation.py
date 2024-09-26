@@ -14,7 +14,7 @@ def test_deviation_urls_pass_validation(url):
     """
     Test that a Deviation accepts deviation URLs.
     """
-    result = Deviation(url)
+    result = Deviation.from_url(url)
 
     assert result.artist in url
     assert result.category in url
@@ -27,4 +27,4 @@ def test_misc_urls_are_rejected(url):
     Test that a Deviation rejects non-deviation URLs.
     """
     with pytest.raises(ValueError):
-        Deviation(url)
+        Deviation.from_url(url)

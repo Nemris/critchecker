@@ -1,7 +1,15 @@
 """ Functions that handle DA deviations. """
 
+from __future__ import annotations
+
 import dataclasses
 import re
+
+
+# This pattern extracts the artist, deviation type and ID.
+DEVIATION_URL_PATTERN = re.compile(
+    r"www\.deviantart\.com/([A-Za-z0-9\-]+)/([a-z\-]+)/(?:.+-)?(\d+)$"
+)
 
 
 @dataclasses.dataclass
@@ -10,55 +18,36 @@ class Deviation:
     A single deviation.
 
     Args:
-        url: The URL pointing to the deviation.
+        artist: The deviation artist.
+        category: The deviation category.
+        id: The deviation ID.
     """
 
-    url: str
+    artist: str
+    category: str
+    id: int  # pylint: disable=invalid-name
 
-    def _search_pattern(self, pattern: str) -> str:
+    @classmethod
+    def from_url(cls, url: str) -> Deviation:
         """
-        Search for pattern in the URL to this deviation.
+        Build a Deviation from a deviation URL.
 
         Args:
-            pattern: Pattern to search for, which will be appended to
-                "www.deviantart.com".
+            url: The string representation of a deviation URL.
 
         Returns:
-            The region matching pattern.
+            An instance of Deviation.
 
         Raises:
-            AttributeError: If no matches are found.
+            ValueError:
+                If url is not a valid deviation URL.
         """
-        # Let's ignore the schema for now.
-        base = r"www\.deviantart\.com"
-        return re.search(f"{base}{pattern}", self.url).group(1)
-
-    def __post_init__(self) -> None:
-        """Validate this deviation by checking its URL."""
         try:
-            _ = self.artist
-            _ = self.category
-            _ = self.id
+            artist, category, id_ = DEVIATION_URL_PATTERN.search(url).groups()
         except AttributeError as exc:
-            raise ValueError(f"{self.url!r}: invalid deviation URL") from exc
+            raise ValueError(f"{url!r}: invalid deviation URL") from exc
 
-    @property
-    def artist(self) -> str:
-        """The deviation's artist."""
-        pattern = r"/([A-Za-z0-9\-]+)/"
-        return self._search_pattern(pattern)
-
-    @property
-    def category(self) -> str:
-        """The deviation's category."""
-        pattern = r"/.+/([a-z\-]+)/"
-        return self._search_pattern(pattern)
-
-    @property
-    def id(self) -> int:  # pylint: disable=invalid-name
-        """The deviation's ID."""
-        pattern = r"/.+/.+/(?:.+-)?(\d+)$"
-        return int(self._search_pattern(pattern))
+        return cls(artist, category, id_)
 
     @property
     def type_id(self) -> int:
