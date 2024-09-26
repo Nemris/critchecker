@@ -39,8 +39,7 @@ class Deviation:
             An instance of Deviation.
 
         Raises:
-            ValueError:
-                If url is not a valid deviation URL.
+            ValueError: If url is not a valid deviation URL.
         """
         try:
             artist, category, id_ = DEVIATION_URL_PATTERN.search(url).groups()
