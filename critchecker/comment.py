@@ -8,6 +8,7 @@ import json
 import re
 
 from critchecker.client import Client, ClientError
+from critchecker.deviation import Deviation
 
 
 COMMENT_URL_PATTERN = re.compile(
@@ -260,7 +261,7 @@ class CommentPage:
 
 
 async def fetch_pages(
-    deviation_id: int, type_id: int, depth: int, offset: int, client: Client
+    deviation: Deviation, depth: int, offset: int, client: Client
 ) -> CommentPage:
     """
     Asynchronously fetch all the pages of comments to a deviation.
@@ -269,8 +270,7 @@ async def fetch_pages(
     maximum size is 50 comments.
 
     Args:
-        deviation_id: The parent deviation's ID.
-        type_id: The parent deviation's type ID.
+        deviation: The deviation whose comment pages to fetch.
         depth: The amount of allowed replies to a comment. A depth of
             zero returns only the topmost comments.
         offset: The offset of the first comment page.
@@ -286,8 +286,8 @@ async def fetch_pages(
     """
     api_url = "https://www.deviantart.com/_napi/shared_api/comments/thread"
     params = {
-        "itemid": deviation_id,
-        "typeid": type_id,
+        "itemid": deviation.id,
+        "typeid": deviation.type_id,
         "order": "newest",
         "maxdepth": depth,
         "offset": offset,

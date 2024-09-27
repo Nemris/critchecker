@@ -82,7 +82,7 @@ async def fetch_blocks(journal: Deviation, client: Client) -> list[comment.Comme
     offset = 0
 
     pbar = tqdm(
-        comment.fetch_pages(journal.id, journal.type_id, depth, offset, client),
+        comment.fetch_pages(journal, depth, offset, client),
         desc="Fetching journal comment pages",
         unit="page",
         leave=False,
@@ -119,13 +119,13 @@ def get_unique_deviations(
 
 
 async def fetch_comments(
-    deviation_id: str, min_date: datetime, client: Client
+    deviation: Deviation, min_date: datetime, client: Client
 ) -> list[comment.Comment]:
     """
     Fetch comments younger than a specific datetime.
 
     Args:
-        deviation_id: The deviation whose comments to fetch.
+        deviation: The deviation whose comments to fetch.
         min_date: Comments older than this will be ignored.
         client: A client that interfaces with DeviantArt.
 
@@ -137,15 +137,12 @@ async def fetch_comments(
         comment.CommentError: If an error occurred while fetching the
             comments.
     """
-    # We're interested only in art, and only in top-level comments.
-    dev_type = 1
+    # We're interested in top-level comments only.
     depth = 0
     offset = 0
 
     comments = []
-    async for page in comment.fetch_pages(
-        deviation_id, dev_type, depth, offset, client
-    ):
+    async for page in comment.fetch_pages(deviation, depth, offset, client):
         # TODO: fix naming.
         for comment_ in page.comments:
             if comment_.timestamp < min_date:
@@ -173,8 +170,11 @@ async def cache_comments(
         comment.CommentError: If an error occurred while fetching the
             comments.
     """
+    # All deviations we're interested in are of type "art".
     tasks = {
-        asyncio.create_task(fetch_comments(dev_id, min_date, client))
+        asyncio.create_task(
+            fetch_comments(Deviation("", "art", dev_id), min_date, client)
+        )
         for dev_id in deviation_ids
     }
     pbar = tqdm.as_completed(
