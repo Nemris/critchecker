@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 2.0.0 - 2024-09-28
 ### Added
  * Support "Tiptap" comments.
  * Introduce a comment cache to reduce the amount of requests.
