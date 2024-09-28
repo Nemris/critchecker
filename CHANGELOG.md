@@ -7,6 +7,7 @@
  * Support the new deviation URL scheme.
 
 ### Changed
+ * The CSV report's `block_url` column is now `batch_url`.
  * Stop post-processing timestamps.
  * Bump minimum Python version to 3.11.
  * Bump all dependencies to latest.

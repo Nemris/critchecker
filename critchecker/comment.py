@@ -181,17 +181,17 @@ class Comment:
         except (KeyError, ValueError) as exc:
             raise BadCommentError("invalid comment data") from exc
 
-    def get_unique_comment_urls(self) -> list[URL]:
+    def get_unique_comment_urls(self) -> set[URL]:
         """
         Extract the unique comment URLs contained in this comment.
 
         Returns:
             The unique comment URLs.
         """
-        return [
+        return {
             URL(ids[1], ids[0], ids[2])
             for ids in set(COMMENT_URL_PATTERN.findall(self.body))
-        ]
+        }
 
 
 @dataclasses.dataclass

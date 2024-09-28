@@ -1,5 +1,7 @@
 """ Tests for critchecker.comment. """
 
+from collections import Counter
+
 from hypothesis import given
 import pytest
 
@@ -29,8 +31,9 @@ def test_extracted_comment_urls_are_unique(comment):
     Test that the comment URLs extracted from a comment are unique.
     """
     urls = Comment(comment).get_unique_comment_urls()
+    counter = Counter(urls)
 
-    assert all(urls.count(url) == 1 for url in urls)
+    assert all(value == 1 for value in counter.values())
 
 
 @given(comment_pages())

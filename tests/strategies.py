@@ -301,7 +301,7 @@ def database_rows(draw):
         "crit_author": draw(none() | usernames()),
         "crit_words": draw(none() | integers()),
         "crit_url": draw(comment_urls()),
-        "block_url": draw(comment_urls()),
+        "batch_url": draw(comment_urls()),
     }
 
     return row

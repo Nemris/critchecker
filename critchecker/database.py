@@ -15,14 +15,14 @@ class Row:
         crit_author: The critique's author.
         crit_words: The critique's length in words.
         crit_url: The critique's URL.
-        block_url: The critique block's URL.
+        batch_url: The critique batch's URL.
     """
 
     crit_tstamp: str = None
     crit_author: str = None
     crit_words: int = None
     crit_url: str = None
-    block_url: str = None
+    batch_url: str = None
 
 
 @dataclasses.dataclass
