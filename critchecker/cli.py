@@ -252,6 +252,7 @@ async def main(journal: str, start_date: datetime, report: pathlib.Path) -> None
             exit_fatal(f"{exc}.")
 
     data = populate_database(batches, cache)
+    data.deduplicate()
     print(f"Total critiques:   {data.total_critiques:>4}")
     print(f"Valid critiques:   {data.valid_critiques:>4}")
     print(f"Deleted critiques: {data.deleted_critiques:>4}")

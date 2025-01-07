@@ -36,6 +36,13 @@ class Database:
 
     rows: list[Row]
 
+    def deduplicate(self) -> None:
+        """
+        Deduplicates self using critique URLs as keys.
+        """
+        deduped = {row.crit_url: row for row in self.rows}
+        self.rows = list(deduped.values())
+
     def dump(self, outfile: TextIO) -> int:
         """
         Dump self to a text stream.

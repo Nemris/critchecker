@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.0.1 - 2025-01-06
+### Fixed
+ * Deduplicate database entries by critique URL.
+
 ## 2.0.0 - 2024-09-28
 ### Added
  * Support "Tiptap" comments.
