@@ -1,17 +1,21 @@
-[tool.poetry]
+[project]
 name = "critchecker"
 version = "2.0.1"
 description = "Extract and measure the length of DeviantArt Critmas critiques."
+authors = [
+    {name = "Nemris", email = "nemris@protonmail.com"}
+]
 license = "MIT"
-authors = ["Nemris <nemris@protonmail.com>"]
 readme = "README.md"
-include = ["README.md", "CHANGELOG.md"]
+requires-python = ">=3.12"
+dependencies = [
+    "aiohttp (>=3.10.5,<4.0.0)",
+    "beautifulsoup4 (>=4.12.3,<5.0.0)",
+    "tqdm (>=4.66.5,<5.0.0)"
+]
 
-[tool.poetry.dependencies]
-python = "^3.11"
-aiohttp = "^3.10.5"
-tqdm = "^4.66.5"
-beautifulsoup4 = "^4.12.3"
+[project.scripts]
+critchecker = "critchecker.cli:wrapper"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.3"
@@ -22,6 +26,3 @@ black = "^24.8.0"
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
-
-[tool.poetry.scripts]
-critchecker = "critchecker.cli:wrapper"
