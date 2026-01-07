@@ -1,22 +1,21 @@
-""" Command-line interface for critchecker. """
+"""Command-line interface for critchecker."""
 
 import argparse
 import asyncio
+from collections.abc import Callable
 from datetime import datetime
 import itertools
 import pathlib
 import sys
-import warnings
 
-from bs4 import MarkupResemblesLocatorWarning
+from sundown import client
+from sundown import comment
+from sundown import deviation
 from tqdm.asyncio import tqdm
 
 from critchecker.cache import Cache
-from critchecker.client import Client, ClientError
-from critchecker import comment
 from critchecker.critique import Batch
 from critchecker.database import Database, Row
-from critchecker.deviation import Deviation
 
 
 def read_args() -> argparse.Namespace:
@@ -61,39 +60,24 @@ def exit_fatal(msg: str) -> None:
     sys.exit(f"Fatal: {msg}")
 
 
-async def fetch_batches(journal: Deviation, client: Client) -> list[Batch]:
+def identify_critique_batches(comments: list[comment.Comment]) -> list[Batch]:
     """
-    Fetch the critique batches posted as comments to a launch journal.
-
-    Critique batches always contain at least one link to a critique.
+    Find the journal comments that contain critique links.
 
     Args:
-        journal: The launch journal.
-        client: A client that interfaces with DeviantArt.
+        comments: The comments to a launch journal.
 
     Returns:
-        Batches of critique URLs found in comments to a launch journal.
-
-    Raises:
-        comment.CommentError: If an error occurred while fetching the
-            critique batches.
+        Batches mapping a journal comment URL to critique links found
+            in the comment.
     """
-    # Fetch only top-level comments.
-    depth = 0
-    offset = 0
-
-    pbar = tqdm(
-        comment.fetch_pages(journal, depth, offset, client),
-        desc="Fetching journal comment pages",
-        unit="page",
-        leave=False,
-    )
-
     batches = []
-    async for page in pbar:
-        for comment_ in page.comments:
-            if critiques := comment_.get_unique_comment_urls():
-                batches.append(Batch(comment_.url, critiques))
+    for c in comments:
+        urls = {u for u in c.body.urls if comment.URL_PATTERN.search(u)}
+        if urls:
+            batches.append(
+                Batch(c.metadata.url, [comment.URL.from_str(u) for u in urls])
+            )
 
     return batches
 
@@ -110,49 +94,45 @@ def get_unique_deviations(batches: list[Batch], ignored_ids: set[str]) -> set[st
         The unique IDs of the deviations referenced by critiques.
     """
     return {
-        url.deviation_id
+        url.deviation.id
         for batch in batches
         for url in batch.crit_urls
-        if url.deviation_id not in ignored_ids
+        if url.deviation.id not in ignored_ids
     }
 
 
 async def fetch_comments(
-    deviation: Deviation, min_date: datetime, client: Client
+    dev: deviation.Deviation | deviation.PartialDeviation,
+    client_: client.Client,
+    keep_downloading: Callable[[comment.Comment], bool],
 ) -> list[comment.Comment]:
     """
-    Fetch comments younger than a specific datetime.
+    Fetch comments to a deviation until a condition occurs.
 
     Args:
-        deviation: The deviation whose comments to fetch.
-        min_date: Comments older than this will be ignored.
-        client: A client that interfaces with DeviantArt.
+        dev: The deviation whose comments to fetch.
+        client_: A client that interfaces with DeviantArt.
+        keep_downloading: A function executed for each comment, which
+            returns True to keep downloading or False to stop.
 
     Returns:
-        The comments to a deviation that are more recent than the
-            specified datetime.
+        The comments to a deviation.
 
     Raises:
-        comment.CommentError: If an error occurred while fetching the
-            comments.
+        comment.Error: If an error occurred while fetching comments.
     """
-    # We're interested in top-level comments only.
-    depth = 0
-    offset = 0
-
     comments = []
-    async for page in comment.fetch_pages(deviation, depth, offset, client):
-        # TODO: fix naming.
-        for comment_ in page.comments:
-            if comment_.timestamp < min_date:
+    async for page in comment.PageIterator(client_, dev, 0, 50):
+        for c in page:
+            if not keep_downloading(c):
                 return comments
-            comments.append(comment_)
+            comments.append(c)
 
     return comments
 
 
 async def cache_comments(
-    deviation_ids: set[str], min_date: datetime, client: Client
+    deviation_ids: set[str], min_date: datetime, client_: client.Client
 ) -> Cache:
     """
     Fetch and cache comments to specific deviations.
@@ -160,22 +140,22 @@ async def cache_comments(
     Args:
         deviation_ids: The deviations whose comments to fetch.
         min_date: Comments older than this will be ignored.
-        client: A client that interfaces with DeviantArt.
+        client_: A client that interfaces with DeviantArt.
 
     Returns:
         A cache of comments to deviations.
 
     Raises:
-        comment.CommentError: If an error occurred while fetching the
-            comments.
+        comment.Error: If an error occurred while fetching comments.
     """
-    # All deviations we're interested in are of type "art".
-    tasks = {
-        asyncio.create_task(
-            fetch_comments(Deviation("", "art", dev_id), min_date, client)
+    tasks = set()
+    for id_ in deviation_ids:
+        d = deviation.PartialDeviation(deviation.Kind.ART, id_)
+        t = asyncio.create_task(
+            fetch_comments(d, client_, lambda c: c.metadata.posted >= min_date)
         )
-        for dev_id in deviation_ids
-    }
+        tasks.add(t)
+
     pbar = tqdm.as_completed(
         tasks, desc="Fetching deviation comments", unit="dev", leave=False
     )
@@ -210,10 +190,10 @@ def populate_database(batches: list[Batch], cache: Cache) -> Database:
             row = Row(crit_url=str(url), batch_url=str(batch.url))
 
             # Enrich row with critique metadata, if available.
-            if entry := cache.find_comment_by_url(url):
-                row.crit_tstamp = entry.timestamp.strftime("%Y-%m-%dT%H:%M:%S%z")
-                row.crit_author = entry.author
-                row.crit_words = entry.words
+            if entry := cache.find_by_id(url.comment_id):
+                row.crit_tstamp = entry.metadata.posted.strftime("%Y-%m-%dT%H:%M:%S%z")
+                row.crit_author = entry.metadata.author
+                row.crit_words = entry.body.words
 
             data.append(row)
 
@@ -230,25 +210,23 @@ async def main(journal: str, start_date: datetime, report: pathlib.Path) -> None
         report: The path and filename to save the CSV report as.
     """
     try:
-        journal = Deviation.from_url(journal)
+        journal = deviation.Deviation.from_url(journal)
     except ValueError as exc:
         exit_fatal(f"{exc}.")
 
-    try:
-        client = await Client.new()
-    except ClientError as exc:
-        exit_fatal(f"{exc}.")
-
-    async with client:
+    async with client.Client() as client_:
+        print("Fetching journal comments...")
         try:
-            batches = await fetch_batches(journal, client)
-        except comment.CommentError as exc:
+            comments = await fetch_comments(journal, client_, lambda c: True)
+        except comment.Error as exc:
             exit_fatal(f"{exc}.")
 
+        batches = identify_critique_batches(comments)
         unique_deviations = get_unique_deviations(batches, {journal.id})
+
         try:
-            cache = await cache_comments(unique_deviations, start_date, client)
-        except comment.CommentError as exc:
+            cache = await cache_comments(unique_deviations, start_date, client_)
+        except comment.Error as exc:
             exit_fatal(f"{exc}.")
 
     data = populate_database(batches, cache)
@@ -274,9 +252,6 @@ def wrapper() -> None:
         start_date = datetime.fromisoformat(f"{args.startdate}T00:00:00-0800")
     except ValueError:
         exit_fatal(f"{args.startdate!r}: invalid YYYY-MM-DD date.")
-
-    # Mute bs4 since it tends to be overzealous.
-    warnings.filterwarnings("ignore", category=MarkupResemblesLocatorWarning)
 
     try:
         asyncio.run(main(args.journal, start_date, args.report))

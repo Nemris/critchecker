@@ -1,8 +1,8 @@
-""" Facilities that handle critiques. """
+"""Facilities that handle critiques."""
 
 import dataclasses
 
-from critchecker.comment import URL
+from sundown import comment
 
 
 @dataclasses.dataclass
@@ -12,9 +12,9 @@ class Batch:
 
     Args:
         url: The URL of the journal comment.
-        crit_urls: Deduplicated set of comment URLs contained in the
-            comment's body.
+        crit_urls: Deduplicated set of comment URLs found in the
+            comment.
     """
 
-    url: URL
-    crit_urls: set[URL]
+    url: comment.URL
+    crit_urls: set[comment.URL]

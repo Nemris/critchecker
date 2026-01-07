@@ -984,6 +984,26 @@ files = [
 ]
 
 [[package]]
+name = "sundown"
+version = "0.1.0"
+description = "Interface with DeviantArt's Eclipse browser API."
+optional = false
+python-versions = ">=3.12"
+groups = ["main"]
+files = []
+develop = false
+
+[package.dependencies]
+aiohttp = ">=3.11.18,<4.0.0"
+beautifulsoup4 = ">=4.13.4,<5.0.0"
+
+[package.source]
+type = "git"
+url = "https://github.com/Nemris/sundown"
+reference = "v0.1.0"
+resolved_reference = "c2ce0890e24def3ee248229b821e0b4e6abe2fca"
+
+[[package]]
 name = "tomlkit"
 version = "0.13.3"
 description = "Style preserving TOML library"
@@ -1177,4 +1197,4 @@ propcache = ">=0.2.1"
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12"
-content-hash = "9b44ff6bd1b831a705b4a4fe9989b1975e4c8875fa140a333470bdedca2befb4"
+content-hash = "6eb9d00047a302c4c2c4197f3545d343754f9d3d924702a4692d50156e0ef22d"

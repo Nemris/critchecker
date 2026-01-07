@@ -1,4 +1,4 @@
-""" Functions and dataclasses that handle Critmas reports. """
+"""Functions and dataclasses that handle Critmas reports."""
 
 import csv
 import dataclasses
