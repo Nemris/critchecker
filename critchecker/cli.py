@@ -13,9 +13,11 @@ from sundown import comment
 from sundown import deviation
 from tqdm.asyncio import tqdm
 
-from critchecker.cache import Cache
 from critchecker.critique import Batch
 from critchecker.database import Database, Row
+
+
+Cache = dict[str, comment.Comment]
 
 
 def read_args() -> argparse.Namespace:
@@ -170,7 +172,7 @@ async def cache_comments(
             task.cancel()
         raise
 
-    return Cache.from_comments(itertools.chain.from_iterable(comments))
+    return {c.metadata.id: c for c in itertools.chain.from_iterable(comments)}
 
 
 def populate_database(batches: list[Batch], cache: Cache) -> Database:
@@ -190,7 +192,7 @@ def populate_database(batches: list[Batch], cache: Cache) -> Database:
             row = Row(crit_url=str(url), batch_url=str(batch.url))
 
             # Enrich row with critique metadata, if available.
-            if entry := cache.find_by_id(url.comment_id):
+            if entry := cache.get(url.comment_id):
                 row.crit_tstamp = entry.metadata.posted.strftime("%Y-%m-%dT%H:%M:%S%z")
                 row.crit_author = entry.metadata.author
                 row.crit_words = entry.body.words
