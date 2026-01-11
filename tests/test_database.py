@@ -1,4 +1,4 @@
-""" Tests for critchecker.database. """
+"""Tests for critchecker.database."""
 
 from collections import Counter
 import io
