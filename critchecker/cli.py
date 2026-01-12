@@ -48,6 +48,12 @@ def read_args() -> argparse.Namespace:
         default=pathlib.Path.home().joinpath("critmas.csv"),
         help="path and filename to save the CSV report as",
     )
+    parser.add_argument(
+        "-s",
+        "--scan-text",
+        action="store_true",
+        help="scan comment bodies to potentially retrieve more critiques",
+    )
 
     return parser.parse_args()
 
@@ -62,12 +68,16 @@ def exit_fatal(msg: str) -> None:
     sys.exit(f"Fatal: {msg}")
 
 
-def identify_critique_batches(comments: list[comment.Comment]) -> list[Batch]:
+def identify_critique_batches(
+    comments: list[comment.Comment], scan_text: bool
+) -> list[Batch]:
     """
     Find the journal comments that contain critique links.
 
     Args:
         comments: The comments to a launch journal.
+        scan_text: If True, scan each comment's text for links. Else,
+            check only the link data sent by DeviantArt in the bodies.
 
     Returns:
         Batches mapping a journal comment URL to critique links found
@@ -76,6 +86,9 @@ def identify_critique_batches(comments: list[comment.Comment]) -> list[Batch]:
     batches = []
     for c in comments:
         urls = {u for u in c.body.urls if comment.URL_PATTERN.search(u)}
+        if scan_text:
+            urls.update({m.group(0) for m in comment.URL_PATTERN.finditer(c.body.text)})
+
         if urls:
             batches.append(
                 Batch(c.metadata.url, [comment.URL.from_str(u) for u in urls])
@@ -223,7 +236,7 @@ async def main(args: argparse.Namespace) -> None:
         except (client.Error, comment.Error) as exc:
             exit_fatal(f"{exc}.")
 
-        batches = identify_critique_batches(comments)
+        batches = identify_critique_batches(comments, args.scan_text)
         unique_deviations = get_unique_deviations(batches, {journal.id})
 
         try:
