@@ -1,5 +1,18 @@
 # Changelog
 
+## Unreleased
+### Added
+ * Depend on Sundown to handle communications with DeviantArt.
+ * Introduce a flag to explicitly scan comment texts for critique links.
+
+### Changed
+ * Bump minimum Python version to 3.12.
+ * Bump all dependencies to latest.
+
+### Removed
+ * Drop custom Eclipse client implementation.
+ * Drop dependency on `aiohttp` and `beautifulsoup4`.
+
 ## 2.0.1 - 2025-01-06
 ### Fixed
  * Deduplicate database entries by critique URL.
