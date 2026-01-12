@@ -5,6 +5,7 @@ import io
 
 from hypothesis import given
 from hypothesis.strategies import lists
+import pytest
 
 from critchecker.database import Database, Row
 from tests.strategies import database_rows
@@ -46,3 +47,14 @@ def test_deduped_database_contains_no_duplicates(rows):
 
     counts = Counter(row.crit_url for row in data.rows)
     assert all(val == 1 for val in counts.values())
+
+
+def test_writing_empty_database_fails():
+    """
+    Test that attempting to write an empty database fails.
+    """
+    data = Database([])
+
+    with io.StringIO(newline="") as stream:
+        with pytest.raises(ValueError):
+            data.dump(stream)

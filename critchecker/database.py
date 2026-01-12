@@ -52,7 +52,13 @@ class Database:
 
         Returns:
             The number of written rows.
+
+        Raises:
+            ValueError: If attempting to write an empty database.
         """
+        if not self.rows:
+            raise ValueError("no rows in database")
+
         header = dataclasses.asdict(self.rows[0]).keys()
         writer = csv.DictWriter(outfile, header)
 

@@ -121,7 +121,8 @@ async def fetch_comments(
         The comments to a deviation.
 
     Raises:
-        comment.Error: If an error occurred while fetching comments.
+        client.Error: If an error occurred while fetching comments.
+        comment.Error: If an error occurred while parsing comment data.
     """
     comments = []
     async for page in comment.PageIterator(client_, dev, 0, 50):
@@ -148,7 +149,8 @@ async def cache_comments(
         A cache of comments to deviations.
 
     Raises:
-        comment.Error: If an error occurred while fetching comments.
+        client.Error: If an error occurred while fetching comments.
+        comment.Error: If an error occurred while parsing comment data.
     """
     tasks = set()
     for id_ in deviation_ids:
@@ -220,7 +222,7 @@ async def main(journal: str, start_date: datetime, report: pathlib.Path) -> None
         print("Fetching journal comments...")
         try:
             comments = await fetch_comments(journal, client_, lambda c: True)
-        except comment.Error as exc:
+        except (client.Error, comment.Error) as exc:
             exit_fatal(f"{exc}.")
 
         batches = identify_critique_batches(comments)
@@ -228,7 +230,7 @@ async def main(journal: str, start_date: datetime, report: pathlib.Path) -> None
 
         try:
             cache = await cache_comments(unique_deviations, start_date, client_)
-        except comment.Error as exc:
+        except (client.Error, comment.Error) as exc:
             exit_fatal(f"{exc}.")
 
     data = populate_database(batches, cache)
@@ -240,7 +242,7 @@ async def main(journal: str, start_date: datetime, report: pathlib.Path) -> None
     try:
         with report.open("w", newline="") as outfile:
             data.dump(outfile)
-    except OSError as exc:
+    except (ValueError, OSError) as exc:
         exit_fatal(f"{exc}.")
 
 
