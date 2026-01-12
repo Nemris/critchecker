@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 3.0.0 - 2026-01-12
 ### Added
  * Depend on Sundown to handle communications with DeviantArt.
  * Introduce a flag to explicitly scan comment texts for critique links.

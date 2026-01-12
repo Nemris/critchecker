@@ -1,6 +1,6 @@
 [project]
 name = "critchecker"
-version = "2.0.1"
+version = "3.0.0"
 description = "Extract and measure the length of DeviantArt Critmas critiques."
 authors = [
     {name = "Nemris", email = "nemris@protonmail.com"}
