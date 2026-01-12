@@ -34,19 +34,19 @@ def read_args() -> argparse.Namespace:
     parser.add_argument(
         "journal",
         type=str,
-        help="the URL of the Critmas launch journal",
+        help="URL of the Critmas launch journal",
     )
     parser.add_argument(
         "startdate",
         type=str,
-        help="the Critmas start date, in the format YYYY-MM-DD",
+        help="Critmas start date, in the format YYYY-MM-DD",
     )
     parser.add_argument(
         "-r",
         "--report",
         type=pathlib.Path,
         default=pathlib.Path.home().joinpath("critmas.csv"),
-        help="the path and filename to save the CSV report as",
+        help="path and filename to save the CSV report as",
     )
 
     return parser.parse_args()
@@ -204,17 +204,15 @@ def populate_database(batches: list[Batch], cache: Cache) -> Database:
     return Database(data)
 
 
-async def main(journal: str, start_date: datetime, report: pathlib.Path) -> None:
+async def main(args: argparse.Namespace) -> None:
     """
     Core of critchecker.
 
     Args:
-        journal: The URL of the Critmas launch journal.
-        start_date: The Critmas start date, in PST time.
-        report: The path and filename to save the CSV report as.
+        args: Command-line arguments.
     """
     try:
-        journal = deviation.Deviation.from_url(journal)
+        journal = deviation.Deviation.from_url(args.journal)
     except ValueError as exc:
         exit_fatal(f"{exc}.")
 
@@ -229,7 +227,7 @@ async def main(journal: str, start_date: datetime, report: pathlib.Path) -> None
         unique_deviations = get_unique_deviations(batches, {journal.id})
 
         try:
-            cache = await cache_comments(unique_deviations, start_date, client_)
+            cache = await cache_comments(unique_deviations, args.startdate, client_)
         except (client.Error, comment.Error) as exc:
             exit_fatal(f"{exc}.")
 
@@ -240,7 +238,7 @@ async def main(journal: str, start_date: datetime, report: pathlib.Path) -> None
     print(f"Deleted critiques: {data.deleted_critiques:>4}")
 
     try:
-        with report.open("w", newline="") as outfile:
+        with args.report.open("w", newline="") as outfile:
             data.dump(outfile)
     except (ValueError, OSError) as exc:
         exit_fatal(f"{exc}.")
@@ -253,12 +251,12 @@ def wrapper() -> None:
     args = read_args()
 
     try:
-        start_date = datetime.fromisoformat(f"{args.startdate}T00:00:00-0800")
+        args.startdate = datetime.fromisoformat(f"{args.startdate}T00:00:00-0800")
     except ValueError:
         exit_fatal(f"{args.startdate!r}: invalid YYYY-MM-DD date.")
 
     try:
-        asyncio.run(main(args.journal, start_date, args.report))
+        asyncio.run(main(args))
     except KeyboardInterrupt:
         # Gracefully abort.
         pass
